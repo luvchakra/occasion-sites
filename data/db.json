@@ -1,16 +1,112 @@
 {
   "customers": [
     {
-      "id": "cust_0a255ac2da95",
+      "id": "cust_a8bb5644ba01",
       "name": "Kabir Khan",
       "email": "kabir.ananya@example.com",
       "phone": "",
+      "createdAt": "2026-09-01T12:23:55.178Z",
+      "updatedAt": "2026-09-01T14:53:21.699Z"
+    },
+    {
+      "id": "cust_0982b26514d2",
+      "name": "Ranbir Pakoor",
+      "email": "",
+      "phone": "",
+      "createdAt": "2026-09-01T13:52:12.440Z",
+      "updatedAt": "2026-09-01T14:53:46.904Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv_4ff1c6f87b10",
+      "invoiceNumber": "INV-0001",
+      "issueDate": "2026-09-01",
+      "dueDate": "2027-01-15",
+      "items": [
+        {
+          "description": "Wedding site design & setup",
+          "qty": 1,
+          "unitPrice": 15000
+        },
+        {
+          "description": "Hosting & 1 year support",
+          "qty": 1,
+          "unitPrice": 3000
+        }
+      ],
+      "notes": "Thank you for choosing us!",
+      "status": "draft",
+      "createdAt": "2026-09-01T12:24:24.820Z",
+      "updatedAt": "2026-09-01T12:24:24.820Z",
+      "orderId": "cust_0a255ac2da95"
+    },
+    {
+      "id": "inv_f4e82cb8f121",
+      "invoiceNumber": "INV-0002",
+      "issueDate": "2026-09-17",
+      "dueDate": "2026-09-28",
+      "items": [
+        {
+          "description": "Website design",
+          "qty": 1,
+          "unitPrice": 10000
+        },
+        {
+          "description": "Software",
+          "qty": 1,
+          "unitPrice": 1000
+        }
+      ],
+      "notes": "",
+      "status": "draft",
+      "createdAt": "2026-09-01T13:54:51.245Z",
+      "updatedAt": "2026-09-01T13:54:51.245Z",
+      "orderId": "cust_5c30c1f80b8e"
+    },
+    {
+      "id": "inv_d80dd964199e",
+      "invoiceNumber": "INV-0003",
+      "issueDate": "2026-09-17",
+      "dueDate": "2026-09-28",
+      "items": [
+        {
+          "description": "",
+          "qty": 1,
+          "unitPrice": 0
+        }
+      ],
+      "notes": "",
+      "status": "draft",
+      "createdAt": "2026-09-01T13:54:58.404Z",
+      "updatedAt": "2026-09-01T13:54:58.404Z",
+      "orderId": "cust_5c30c1f80b8e"
+    }
+  ],
+  "counters": {
+    "invoice": 3,
+    "order": 2
+  },
+  "settings": {
+    "businessName": "Occasion Sites",
+    "email": "upasanaa@gmail.com",
+    "paymentDetails": "UPI id: abz@asd",
+    "address": "Nariman point, Mumbai",
+    "phone": "123456789"
+  },
+  "orders": [
+    {
+      "id": "cust_0a255ac2da95",
+      "orderNumber": "ORD-0001",
+      "customerId": "cust_a8bb5644ba01",
+      "title": "Kabir Khan",
       "occasionType": "wedding",
       "templateId": "wedding",
       "slug": "kabir-ananya",
       "occasionDate": "2027-02-21",
       "status": "published",
       "publishedPath": "sites/kabir-ananya",
+      "publicUrl": "https://luvchakra.github.io/occasion-sites/sites/kabir-ananya/",
       "config": {
         "couple": {
           "brideName": "Ananya",
@@ -62,20 +158,20 @@
         }
       },
       "createdAt": "2026-09-01T12:23:55.178Z",
-      "updatedAt": "2026-09-01T14:53:21.699Z",
-      "publicUrl": "https://luvchakra.github.io/occasion-sites/sites/kabir-ananya/"
+      "updatedAt": "2026-09-01T14:53:21.699Z"
     },
     {
       "id": "cust_5c30c1f80b8e",
-      "name": "Ranbir Pakoor",
-      "email": "",
-      "phone": "",
+      "orderNumber": "ORD-0002",
+      "customerId": "cust_0982b26514d2",
+      "title": "Ranbir Pakoor",
       "occasionType": "wedding",
       "templateId": "wedding",
       "slug": "ranbir-and-aliya",
       "occasionDate": "",
       "status": "draft",
       "publishedPath": "",
+      "publicUrl": "",
       "config": {
         "couple": {
           "brideName": "Aliya",
@@ -124,81 +220,5 @@
       "createdAt": "2026-09-01T13:52:12.440Z",
       "updatedAt": "2026-09-01T14:53:46.904Z"
     }
-  ],
-  "invoices": [
-    {
-      "id": "inv_4ff1c6f87b10",
-      "invoiceNumber": "INV-0001",
-      "customerId": "cust_0a255ac2da95",
-      "issueDate": "2026-09-01",
-      "dueDate": "2027-01-15",
-      "items": [
-        {
-          "description": "Wedding site design & setup",
-          "qty": 1,
-          "unitPrice": 15000
-        },
-        {
-          "description": "Hosting & 1 year support",
-          "qty": 1,
-          "unitPrice": 3000
-        }
-      ],
-      "notes": "Thank you for choosing us!",
-      "status": "draft",
-      "createdAt": "2026-09-01T12:24:24.820Z",
-      "updatedAt": "2026-09-01T12:24:24.820Z"
-    },
-    {
-      "id": "inv_f4e82cb8f121",
-      "invoiceNumber": "INV-0002",
-      "customerId": "cust_5c30c1f80b8e",
-      "issueDate": "2026-09-17",
-      "dueDate": "2026-09-28",
-      "items": [
-        {
-          "description": "Website design",
-          "qty": 1,
-          "unitPrice": 10000
-        },
-        {
-          "description": "Software",
-          "qty": 1,
-          "unitPrice": 1000
-        }
-      ],
-      "notes": "",
-      "status": "draft",
-      "createdAt": "2026-09-01T13:54:51.245Z",
-      "updatedAt": "2026-09-01T13:54:51.245Z"
-    },
-    {
-      "id": "inv_d80dd964199e",
-      "invoiceNumber": "INV-0003",
-      "customerId": "cust_5c30c1f80b8e",
-      "issueDate": "2026-09-17",
-      "dueDate": "2026-09-28",
-      "items": [
-        {
-          "description": "",
-          "qty": 1,
-          "unitPrice": 0
-        }
-      ],
-      "notes": "",
-      "status": "draft",
-      "createdAt": "2026-09-01T13:54:58.404Z",
-      "updatedAt": "2026-09-01T13:54:58.404Z"
-    }
-  ],
-  "counters": {
-    "invoice": 3
-  },
-  "settings": {
-    "businessName": "Occasion Sites",
-    "email": "upasanaa@gmail.com",
-    "paymentDetails": "UPI id: abz@asd",
-    "address": "Nariman point, Mumbai",
-    "phone": "123456789"
-  }
+  ]
 }
