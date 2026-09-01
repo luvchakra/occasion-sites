@@ -171,10 +171,28 @@
       "status": "draft",
       "createdAt": "2026-09-01T13:54:51.245Z",
       "updatedAt": "2026-09-01T13:54:51.245Z"
+    },
+    {
+      "id": "inv_d80dd964199e",
+      "invoiceNumber": "INV-0003",
+      "customerId": "cust_5c30c1f80b8e",
+      "issueDate": "2026-09-17",
+      "dueDate": "2026-09-28",
+      "items": [
+        {
+          "description": "",
+          "qty": 1,
+          "unitPrice": 0
+        }
+      ],
+      "notes": "",
+      "status": "draft",
+      "createdAt": "2026-09-01T13:54:58.404Z",
+      "updatedAt": "2026-09-01T13:54:58.404Z"
     }
   ],
   "counters": {
-    "invoice": 2
+    "invoice": 3
   },
   "settings": {
     "businessName": "Luv Chakra Occasion Sites",
