@@ -197,8 +197,8 @@
   "settings": {
     "businessName": "Occasion Sites",
     "email": "upasanaa@gmail.com",
-    "paymentDetails": "UPI / bank details go here",
-    "address": "",
-    "phone": ""
+    "paymentDetails": "UPI id: abz@asd",
+    "address": "Nariman point, Mumbai",
+    "phone": "123456789"
   }
 }
