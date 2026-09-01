@@ -65,7 +65,7 @@
       <div class="table-wrap">
         <table id="customerTable" class="responsive-table">
           <thead>
-            <tr><th>Name</th><th>Occasion</th><th>Status</th><th>Updated</th><th></th></tr>
+            <tr><th>Name</th><th>Occasion</th><th>Status</th><th>Updated</th><th>Preview</th><th></th></tr>
           </thead>
           <tbody id="customerRows"></tbody>
         </table>
@@ -94,6 +94,25 @@ function updatePreviewLink() {
   else { link.href = '#'; }
 }
 
+// A template select (limited to templates matching this order's occasion)
+// plus a Preview button — lets you check how any matching template design
+// looks before deciding, without opening the order itself.
+function previewPicker(c) {
+  const options = templates.filter((t) => t.occasionType === c.occasionType);
+  const sel = el('select', { style: 'min-width:0;' },
+    (options.length ? options : templates).map((t) => {
+      const opt = el('option', { value: t.id }, t.label);
+      if (t.id === c.templateId) opt.selected = true;
+      return opt;
+    })
+  );
+  const btn = el('button', {
+    class: 'btn small secondary', type: 'button',
+    onclick: () => window.open(`/preview-template/${sel.value}`, '_blank')
+  }, 'Preview');
+  return el('div', { class: 'row', style: 'gap:6px; margin-top:0; flex-wrap:nowrap;' }, [sel, btn]);
+}
+
 async function loadCustomers() {
   const customers = await api('GET', '/api/customers');
   const rows = document.getElementById('customerRows');
@@ -108,6 +127,7 @@ async function loadCustomers() {
         el('td', { 'data-label': 'Occasion' }, c.occasionType),
         el('td', { 'data-label': 'Status' }, el('span', { class: `badge ${c.status}` }, c.status)),
         el('td', { 'data-label': 'Updated' }, c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''),
+        el('td', { 'data-label': 'Preview' }, previewPicker(c)),
         el('td', { class: 'actions' }, [
           el('a', { class: 'btn small secondary', href: `/customer.html?id=${c.id}` }, 'Open'),
           ' ',

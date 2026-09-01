@@ -62,7 +62,6 @@
 
     <div class="row action-bar">
       <button class="btn accent" id="saveBtn">Save changes</button>
-      <button class="btn secondary" id="previewBtn">Preview site</button>
       <button class="btn" id="publishBtn">Publish live</button>
       <a class="btn secondary" id="invoiceLink" href="#">Invoices</a>
     </div>
@@ -211,13 +210,6 @@ document.getElementById('saveContactBtn').addEventListener('click', async () => 
 });
 
 document.getElementById('saveBtn').addEventListener('click', () => saveConfig().catch(err => toast(err.message, true)));
-
-document.getElementById('previewBtn').addEventListener('click', async () => {
-  try {
-    await saveConfig();
-    window.open(`/preview/${customerId}`, '_blank');
-  } catch (err) { toast(err.message, true); }
-});
 
 document.getElementById('publishBtn').addEventListener('click', async () => {
   const btn = document.getElementById('publishBtn');

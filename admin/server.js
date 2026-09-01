@@ -62,21 +62,9 @@ app.put('/api/settings', ah(async (req, res) => {
   res.json(settings);
 }));
 
-// Renders a customer's site with their current (possibly unpublished) data,
-// without touching the repo — lets you check a draft before publishing.
-app.get('/preview/:id', ah(async (req, res) => {
-  const db = await withDb((d) => d);
-  const customer = db.customers.find((c) => c.id === req.params.id);
-  if (!customer) return res.status(404).send('Customer not found');
-  const template = await getTemplate(customer.templateId);
-  if (!template) return res.status(404).send('Template not found');
-  const html = renderSite(await getTemplateHtml(customer.templateId), template.schema, customer.config);
-  const withBase = html.replace('<head>', `<head>\n<base href="/preview-assets/${customer.id}/">`);
-  res.send(withBase);
-}));
-
-// Serves the images/videos a customer preview needs: this customer's
-// uploads first, falling back to the template's own default/backdrop assets.
+// Serves the photo thumbnails shown while editing a customer's form: this
+// customer's uploads first, falling back to the template's own
+// default/backdrop assets.
 app.get('/preview-assets/:customerId/:type/:filename', ah(async (req, res) => {
   const db = await withDb((d) => d);
   const customer = db.customers.find((c) => c.id === req.params.customerId);
