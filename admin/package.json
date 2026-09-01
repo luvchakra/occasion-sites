@@ -1,0 +1,15 @@
+{
+  "name": "occasion-sites-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Admin tool for building and publishing customer occasion websites (weddings, birthdays, etc.) from configurable templates.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^2.0.0"
+  }
+}

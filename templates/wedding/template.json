@@ -1,0 +1,131 @@
+{
+  "occasionType": "wedding",
+  "label": "Wedding",
+  "description": "Single-page wedding site with countdown, events, gallery, dress code, RSVP and an envelope-opening intro video.",
+  "templateFile": "index.html",
+  "configMarker": {
+    "start": "window.SITE_CONFIG = {",
+    "end": "<!-- ==================== END OF CONFIGURATION ==================== -->"
+  },
+  "sections": [
+    {
+      "title": "Couple",
+      "fields": [
+        { "key": "couple.brideName", "label": "Bride's Name", "type": "text", "required": true },
+        { "key": "couple.groomName", "label": "Groom's Name", "type": "text", "required": true },
+        { "key": "couple.mainPhoto", "label": "Main Photo (hero)", "type": "image" },
+        { "key": "couple.introText", "label": "Our Story", "type": "textarea" }
+      ]
+    },
+    {
+      "title": "Wedding Details",
+      "fields": [
+        { "key": "wedding.heartDay", "label": "Day (e.g. 21st)", "type": "text" },
+        { "key": "wedding.heartMonth", "label": "Month (e.g. Feb)", "type": "text" },
+        { "key": "wedding.heartYear", "label": "Year (e.g. 2027)", "type": "text" },
+        { "key": "wedding.time", "label": "Ceremony Time (e.g. 5:00 PM)", "type": "text" },
+        { "key": "wedding.displayDate", "label": "Full Date (e.g. 21 February 2027)", "type": "text" },
+        { "key": "wedding.location", "label": "Location (short, e.g. Goa)", "type": "text" },
+        { "key": "wedding.venueName", "label": "Venue Name", "type": "text" },
+        { "key": "wedding.venueAddress", "label": "Venue Address", "type": "text" },
+        { "key": "wedding.googleMapsEmbedUrl", "label": "Google Maps Embed URL", "type": "url" },
+        { "key": "wedding.googleMapsDirectionsUrl", "label": "Google Maps Directions URL", "type": "url" },
+        { "key": "wedding.countdownDateTime", "label": "Countdown Date/Time (YYYY-MM-DDTHH:MM:SS)", "type": "text" }
+      ]
+    },
+    {
+      "title": "Ceremonies / Events",
+      "fields": [
+        {
+          "key": "events",
+          "label": "Events",
+          "type": "list",
+          "itemLabel": "Event",
+          "itemFields": [
+            { "key": "name", "label": "Event Name", "type": "text" },
+            { "key": "date", "label": "Date", "type": "text" },
+            { "key": "time", "label": "Time", "type": "text" },
+            { "key": "venue", "label": "Venue", "type": "text" },
+            { "key": "description", "label": "Description", "type": "textarea" },
+            { "key": "dressCode", "label": "Dress Code", "type": "text" },
+            { "key": "photo", "label": "Photo", "type": "image" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Story",
+      "fields": [
+        { "key": "story.quote", "label": "Milestone Quote (optional)", "type": "text" }
+      ]
+    },
+    {
+      "title": "Gallery",
+      "fields": [
+        {
+          "key": "gallery",
+          "label": "Gallery Photos",
+          "type": "list",
+          "itemLabel": "Photo",
+          "itemFields": [
+            { "key": "photo", "label": "Photo", "type": "image" },
+            { "key": "caption", "label": "Caption", "type": "text" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Dress Code",
+      "fields": [
+        { "key": "dressCodeImage", "label": "Dress Code Infographic", "type": "image" }
+      ]
+    },
+    {
+      "title": "RSVP",
+      "fields": [
+        { "key": "rsvp.contactName", "label": "Contact Name", "type": "text" },
+        { "key": "rsvp.whatsapp", "label": "WhatsApp Number", "type": "text" },
+        { "key": "rsvp.email", "label": "Contact Email", "type": "text" },
+        { "key": "rsvp.infoText", "label": "RSVP Info Text", "type": "text" },
+        { "key": "rsvp.googleFormActionUrl", "label": "Google Form Action URL (advanced)", "type": "url" },
+        { "key": "rsvp.entryIds.name", "label": "Form Entry ID: name (advanced)", "type": "text" },
+        { "key": "rsvp.entryIds.attend", "label": "Form Entry ID: attend (advanced)", "type": "text" },
+        { "key": "rsvp.entryIds.guests", "label": "Form Entry ID: guests (advanced)", "type": "text" },
+        { "key": "rsvp.entryIds.message", "label": "Form Entry ID: message (advanced)", "type": "text" }
+      ]
+    },
+    {
+      "title": "Social / Contact Links",
+      "fields": [
+        { "key": "social.instagram", "label": "Instagram URL", "type": "url" },
+        { "key": "social.whatsapp", "label": "WhatsApp Link", "type": "url" },
+        {
+          "key": "social.other",
+          "label": "Other Links",
+          "type": "list",
+          "itemLabel": "Link",
+          "itemFields": [
+            { "key": "label", "label": "Label", "type": "text" },
+            { "key": "url", "label": "URL", "type": "url" }
+          ]
+        }
+      ]
+    }
+  ],
+  "defaultConfig": {
+    "couple": { "brideName": "", "groomName": "", "mainPhoto": "", "introText": "" },
+    "wedding": {
+      "heartDay": "", "heartMonth": "", "heartYear": "", "time": "", "displayDate": "", "location": "",
+      "venueName": "", "venueAddress": "", "googleMapsEmbedUrl": "", "googleMapsDirectionsUrl": "", "countdownDateTime": ""
+    },
+    "events": [],
+    "story": { "quote": "" },
+    "gallery": [],
+    "dressCodeImage": "",
+    "rsvp": {
+      "contactName": "", "whatsapp": "", "email": "", "infoText": "",
+      "googleFormActionUrl": "", "entryIds": { "name": "", "attend": "", "guests": "", "message": "" }
+    },
+    "social": { "instagram": "", "whatsapp": "", "other": [] }
+  }
+}

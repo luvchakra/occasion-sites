@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Occasion Sites — Admin</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Occasion Sites</div>
+  <nav>
+    <a href="/index.html">Customers</a>
+    <a href="/settings.html">Business Settings</a>
+  </nav>
+</header>
+<main>
+  <h1>Customers</h1>
+  <div class="sub">Every website you're building for a customer, one row each.</div>
+
+  <div class="card">
+    <div class="row between">
+      <strong>New customer</strong>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label>Customer / couple name</label>
+        <input id="newName" type="text" placeholder="e.g. Kabir & Ananya">
+      </div>
+      <div>
+        <label>Occasion template</label>
+        <select id="newTemplate"></select>
+      </div>
+      <div>
+        <label>Email (optional)</label>
+        <input id="newEmail" type="email">
+      </div>
+      <div>
+        <label>Phone (optional)</label>
+        <input id="newPhone" type="tel">
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn accent" id="createBtn">Create customer</button>
+    </div>
+  </div>
+
+  <h2>All customers</h2>
+  <div class="card" id="listCard">
+    <table id="customerTable">
+      <thead>
+        <tr><th>Name</th><th>Occasion</th><th>Status</th><th>Updated</th><th></th></tr>
+      </thead>
+      <tbody id="customerRows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" hidden>No customers yet — create your first one above.</div>
+  </div>
+</main>
+<script src="/app.js"></script>
+<script>
+let templates = [];
+
+async function loadTemplates() {
+  templates = await api('GET', '/api/templates');
+  const sel = document.getElementById('newTemplate');
+  sel.innerHTML = templates.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
+    || '<option disabled>No templates found</option>';
+}
+
+async function loadCustomers() {
+  const customers = await api('GET', '/api/customers');
+  const rows = document.getElementById('customerRows');
+  const empty = document.getElementById('emptyState');
+  rows.innerHTML = '';
+  empty.hidden = customers.length > 0;
+  customers
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .forEach(c => {
+      const tr = el('tr', {}, [
+        el('td', {}, el('a', { class: 'link', href: `/customer.html?id=${c.id}` }, c.name)),
+        el('td', {}, c.occasionType),
+        el('td', {}, el('span', { class: `badge ${c.status}` }, c.status)),
+        el('td', {}, c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''),
+        el('td', {}, [
+          el('a', { class: 'btn small secondary', href: `/customer.html?id=${c.id}` }, 'Open'),
+          ' ',
+          el('a', { class: 'btn small secondary', href: `/invoices.html?customerId=${c.id}` }, 'Invoices')
+        ])
+      ]);
+      rows.appendChild(tr);
+    });
+}
+
+document.getElementById('createBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newName').value.trim();
+  const templateId = document.getElementById('newTemplate').value;
+  const email = document.getElementById('newEmail').value.trim();
+  const phone = document.getElementById('newPhone').value.trim();
+  if (!name) return toast('Enter a customer name first', true);
+  if (!templateId) return toast('No template selected', true);
+  try {
+    const customer = await api('POST', '/api/customers', { name, templateId, email, phone });
+    location.href = `/customer.html?id=${customer.id}`;
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+loadTemplates().then(loadCustomers).catch(err => toast(err.message, true));
+</script>
+</body>
+</html>

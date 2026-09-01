@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoices — Occasion Sites</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Occasion Sites</div>
+  <nav>
+    <a href="/index.html">Customers</a>
+    <a href="/settings.html">Business Settings</a>
+  </nav>
+</header>
+<main>
+  <a class="link" href="#" id="backLink">&larr; Back to customer</a>
+  <h1 id="pageTitle">Invoices</h1>
+  <div class="sub" id="pageSub"></div>
+
+  <div class="card">
+    <strong>New invoice</strong>
+    <div class="grid-2">
+      <div>
+        <label>Issue date</label>
+        <input id="issueDate" type="date">
+      </div>
+      <div>
+        <label>Due date</label>
+        <input id="dueDate" type="date">
+      </div>
+    </div>
+    <label>Line items</label>
+    <div id="itemsWrap"></div>
+    <button class="btn small secondary" id="addItemBtn" type="button" style="margin-top:8px;">+ Add line item</button>
+    <label>Notes (payment details, terms, thank-you note…)</label>
+    <textarea id="notes"></textarea>
+    <div class="row between" style="margin-top:16px;">
+      <strong>Total: <span id="newTotal">0.00</span></strong>
+      <button class="btn accent" id="createInvoiceBtn">Create invoice</button>
+    </div>
+  </div>
+
+  <h2>All invoices for this customer</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th>#</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
+      <tbody id="invoiceRows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" hidden>No invoices yet.</div>
+  </div>
+</main>
+<script src="/app.js"></script>
+<script>
+const customerId = qs('customerId');
+let items = [{ description: '', qty: 1, unitPrice: 0 }];
+
+function renderItems() {
+  const wrap = document.getElementById('itemsWrap');
+  wrap.innerHTML = '';
+  items.forEach((item, idx) => {
+    wrap.appendChild(el('div', { class: 'row', style: 'margin-top:8px;' }, [
+      el('input', { type: 'text', placeholder: 'Description', style: 'flex:3;', value: item.description,
+        oninput: (e) => { item.description = e.target.value; } }),
+      el('input', { type: 'number', placeholder: 'Qty', style: 'flex:1;', value: item.qty, min: '0',
+        oninput: (e) => { item.qty = Number(e.target.value); updateTotal(); } }),
+      el('input', { type: 'number', placeholder: 'Unit price', style: 'flex:1;', value: item.unitPrice, min: '0', step: '0.01',
+        oninput: (e) => { item.unitPrice = Number(e.target.value); updateTotal(); } }),
+      el('button', { class: 'btn small danger', type: 'button',
+        onclick: () => { items.splice(idx, 1); renderItems(); updateTotal(); } }, 'Remove')
+    ]));
+  });
+}
+
+function updateTotal() {
+  const total = items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.unitPrice) || 0), 0);
+  document.getElementById('newTotal').textContent = money(total);
+}
+
+document.getElementById('addItemBtn').addEventListener('click', () => {
+  items.push({ description: '', qty: 1, unitPrice: 0 });
+  renderItems();
+});
+
+document.getElementById('createInvoiceBtn').addEventListener('click', async () => {
+  try {
+    await api('POST', '/api/invoices', {
+      customerId,
+      issueDate: document.getElementById('issueDate').value,
+      dueDate: document.getElementById('dueDate').value,
+      items,
+      notes: document.getElementById('notes').value
+    });
+    toast('Invoice created');
+    items = [{ description: '', qty: 1, unitPrice: 0 }];
+    renderItems();
+    updateTotal();
+    document.getElementById('notes').value = '';
+    loadInvoices();
+  } catch (err) { toast(err.message, true); }
+});
+
+async function loadInvoices() {
+  const customer = await api('GET', `/api/customers/${customerId}`);
+  document.getElementById('pageTitle').textContent = `Invoices — ${customer.name}`;
+  document.getElementById('backLink').href = `/customer.html?id=${customerId}`;
+
+  const invoices = await api('GET', `/api/invoices?customerId=${customerId}`);
+  const rows = document.getElementById('invoiceRows');
+  rows.innerHTML = '';
+  document.getElementById('emptyState').hidden = invoices.length > 0;
+  invoices
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .forEach((inv) => {
+      rows.appendChild(el('tr', {}, [
+        el('td', {}, inv.invoiceNumber),
+        el('td', {}, inv.issueDate || ''),
+        el('td', {}, inv.dueDate || ''),
+        el('td', {}, money(inv.total)),
+        el('td', {}, el('select', {
+          onchange: (e) => api('PUT', `/api/invoices/${inv.id}`, { status: e.target.value })
+        }, ['draft', 'sent', 'paid'].map(s => {
+          const opt = el('option', { value: s }, s);
+          if (s === inv.status) opt.selected = true;
+          return opt;
+        }))),
+        el('td', {}, [
+          el('a', { class: 'btn small secondary', href: `/invoice-print.html?id=${inv.id}`, target: '_blank' }, 'View / Print'),
+          ' ',
+          el('button', { class: 'btn small danger', onclick: async () => {
+            if (!confirm('Delete this invoice?')) return;
+            await api('DELETE', `/api/invoices/${inv.id}`);
+            loadInvoices();
+          } }, 'Delete')
+        ])
+      ]));
+    });
+}
+
+renderItems();
+updateTotal();
+loadInvoices().catch(err => toast(err.message, true));
+</script>
+</body>
+</html>

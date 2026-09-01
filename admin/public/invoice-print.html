@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  main { max-width: 720px; }
+  .letterhead { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 28px; }
+  .letterhead h1 { margin:0; }
+  .bill-to { color: var(--ink-soft); font-size:.92rem; margin-top:4px; white-space:pre-line; }
+  table.items th, table.items td { padding: 10px 6px; }
+  table.items td.num, table.items th.num { text-align: right; }
+  .totals { display:flex; justify-content:flex-end; margin-top:10px; }
+  .totals table td { border: none; padding: 4px 6px; }
+  .totals .grand td { font-weight:700; font-size:1.1rem; border-top:2px solid var(--ink); }
+  .notes { margin-top: 30px; white-space: pre-line; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<header class="topbar no-print">
+  <div class="brand">Occasion Sites</div>
+  <nav>
+    <a href="/index.html">Customers</a>
+    <a href="/settings.html">Business Settings</a>
+  </nav>
+</header>
+<main>
+  <div class="row between no-print" style="margin-bottom:16px;">
+    <span class="badge" id="statusBadge"></span>
+    <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div class="card" id="invoiceCard">
+    <div class="letterhead">
+      <div>
+        <h1 id="bizName">Your Business</h1>
+        <div class="bill-to" id="bizDetails"></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;font-size:1.2rem;" id="invNumber"></div>
+        <div class="sub" id="invDates" style="margin:0;"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <label style="margin-top:0;">Billed to</label>
+        <div id="customerBlock"></div>
+      </div>
+    </div>
+
+    <table class="items" style="margin-top:24px;">
+      <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+      <tbody id="itemRows"></tbody>
+    </table>
+
+    <div class="totals">
+      <table>
+        <tr class="grand"><td>Total</td><td id="grandTotal"></td></tr>
+      </table>
+    </div>
+
+    <div class="notes" id="notesBlock"></div>
+  </div>
+</main>
+<script src="/app.js"></script>
+<script>
+async function load() {
+  const id = qs('id');
+  const [invoice, settings] = await Promise.all([
+    api('GET', `/api/invoices/${id}`),
+    api('GET', '/api/settings')
+  ]);
+
+  document.getElementById('bizName').textContent = settings.businessName || 'Your Business';
+  document.getElementById('bizDetails').textContent = [settings.address, settings.email, settings.phone].filter(Boolean).join('\n');
+
+  document.getElementById('invNumber').textContent = invoice.invoiceNumber;
+  document.getElementById('invDates').textContent =
+    `Issued ${invoice.issueDate || '—'}${invoice.dueDate ? ' · Due ' + invoice.dueDate : ''}`;
+
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = invoice.status;
+  badge.className = `badge ${invoice.status === 'paid' ? 'published' : 'draft'}`;
+
+  const c = invoice.customer;
+  document.getElementById('customerBlock').innerHTML = c
+    ? `<strong>${c.name}</strong><br>${[c.email, c.phone].filter(Boolean).join(' · ')}`
+    : '—';
+
+  const rows = document.getElementById('itemRows');
+  rows.innerHTML = '';
+  (invoice.items || []).forEach((it) => {
+    const amount = Number(it.qty || 0) * Number(it.unitPrice || 0);
+    rows.appendChild(el('tr', {}, [
+      el('td', {}, it.description || ''),
+      el('td', { class: 'num' }, String(it.qty)),
+      el('td', { class: 'num' }, money(it.unitPrice)),
+      el('td', { class: 'num' }, money(amount))
+    ]));
+  });
+
+  document.getElementById('grandTotal').textContent = money(invoice.total);
+  document.getElementById('notesBlock').textContent = invoice.notes || '';
+}
+
+load().catch(err => toast(err.message, true));
+</script>
+</body>
+</html>

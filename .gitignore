@@ -1,0 +1,8 @@
+# Customer data (PII) and uploaded photo staging — never committed to this
+# public repo. Only rendered output under /sites is meant to be public.
+data/
+admin/uploads/
+
+admin/node_modules/
+admin/.env
+.DS_Store

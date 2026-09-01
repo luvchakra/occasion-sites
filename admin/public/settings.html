@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Settings — Occasion Sites</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Occasion Sites</div>
+  <nav>
+    <a href="/index.html">Customers</a>
+    <a href="/settings.html">Business Settings</a>
+  </nav>
+</header>
+<main>
+  <h1>Business Settings</h1>
+  <div class="sub">Shown on the letterhead of every invoice.</div>
+  <div class="card">
+    <label>Business name</label>
+    <input id="businessName" type="text">
+    <label>Address</label>
+    <textarea id="address"></textarea>
+    <label>Email</label>
+    <input id="email" type="email">
+    <label>Phone</label>
+    <input id="phone" type="tel">
+    <label>Payment details (bank/UPI info shown in invoice notes by default)</label>
+    <textarea id="paymentDetails"></textarea>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn accent" id="saveBtn">Save</button>
+    </div>
+  </div>
+</main>
+<script src="/app.js"></script>
+<script>
+async function load() {
+  const s = await api('GET', '/api/settings');
+  document.getElementById('businessName').value = s.businessName || '';
+  document.getElementById('address').value = s.address || '';
+  document.getElementById('email').value = s.email || '';
+  document.getElementById('phone').value = s.phone || '';
+  document.getElementById('paymentDetails').value = s.paymentDetails || '';
+}
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  try {
+    await api('PUT', '/api/settings', {
+      businessName: document.getElementById('businessName').value,
+      address: document.getElementById('address').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      paymentDetails: document.getElementById('paymentDetails').value
+    });
+    toast('Saved');
+  } catch (err) { toast(err.message, true); }
+});
+
+load().catch(err => toast(err.message, true));
+</script>
+</body>
+</html>

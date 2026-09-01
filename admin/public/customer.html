@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Customer — Occasion Sites</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Occasion Sites</div>
+  <nav>
+    <a href="/index.html">Customers</a>
+    <a href="/settings.html">Business Settings</a>
+  </nav>
+</header>
+<main>
+  <a class="link" href="/index.html">&larr; All customers</a>
+  <div class="row between" style="margin-top:8px;">
+    <h1 id="pageTitle">Loading…</h1>
+    <span class="badge" id="statusBadge"></span>
+  </div>
+  <div class="sub" id="pageSub"></div>
+
+  <div class="card">
+    <div class="grid-2">
+      <div>
+        <label>Customer / couple name</label>
+        <input id="cName" type="text">
+      </div>
+      <div>
+        <label>Occasion date</label>
+        <input id="cDate" type="date">
+      </div>
+      <div>
+        <label>Email</label>
+        <input id="cEmail" type="email">
+      </div>
+      <div>
+        <label>Phone</label>
+        <input id="cPhone" type="tel">
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn secondary" id="saveContactBtn">Save contact info</button>
+    </div>
+  </div>
+
+  <div id="formSections"></div>
+
+  <div class="row" style="margin-top:20px; position:sticky; bottom:16px;">
+    <button class="btn accent" id="saveBtn">Save changes</button>
+    <button class="btn secondary" id="previewBtn">Preview site</button>
+    <button class="btn" id="publishBtn">Publish live</button>
+    <a class="btn secondary" id="invoiceLink" href="#">Invoices</a>
+  </div>
+  <div class="sub" id="publishResult" style="margin-top:10px;"></div>
+</main>
+<script src="/app.js"></script>
+<script>
+const customerId = qs('id');
+let customer, template;
+
+function fieldControl(field, getValue, setValue) {
+  const value = getValue() ?? '';
+  if (field.type === 'textarea') {
+    const ta = el('textarea', { onchange: () => setValue(ta.value) });
+    ta.value = value;
+    return ta;
+  }
+  if (field.type === 'image') {
+    const thumb = el('img', {
+      class: 'thumb',
+      src: value ? `/preview-assets/${customerId}/${value}` : ''
+    });
+    thumb.style.visibility = value ? 'visible' : 'hidden';
+    const fileInput = el('input', {
+      type: 'file', accept: 'image/*',
+      onchange: async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        try {
+          const path = await uploadPhoto(customerId, file);
+          setValue(path);
+          thumb.src = `/preview-assets/${customerId}/${path}`;
+          thumb.style.visibility = 'visible';
+          toast('Photo uploaded — remember to Save');
+        } catch (err) {
+          toast(err.message, true);
+        }
+      }
+    });
+    return el('div', { class: 'upload-row' }, [thumb, fileInput]);
+  }
+  const inputType = field.type === 'url' ? 'url' : 'text';
+  const input = el('input', { type: inputType, onchange: () => setValue(input.value) });
+  input.value = value;
+  return input;
+}
+
+function renderListField(field) {
+  const wrap = el('div', {});
+  const items = getPath(customer.config, field.key) || [];
+
+  function renderItems() {
+    wrap.innerHTML = '';
+    items.forEach((item, idx) => {
+      const body = field.itemFields.map((sub) => el('div', {}, [
+        el('label', {}, sub.label),
+        fieldControl(sub, () => item[sub.key], (v) => { item[sub.key] = v; })
+      ]));
+      wrap.appendChild(el('div', { class: 'list-item' }, [
+        el('button', {
+          class: 'btn small danger remove', type: 'button',
+          onclick: () => { items.splice(idx, 1); renderItems(); }
+        }, 'Remove'),
+        ...body
+      ]));
+    });
+    setPath(customer.config, field.key, items);
+  }
+  renderItems();
+
+  const addBtn = el('button', {
+    class: 'btn small secondary', type: 'button', style: 'margin-top:10px;',
+    onclick: () => {
+      const blank = {};
+      field.itemFields.forEach((sub) => { blank[sub.key] = ''; });
+      items.push(blank);
+      renderItems();
+    }
+  }, `+ Add ${field.itemLabel || 'item'}`);
+
+  return el('div', {}, [wrap, addBtn]);
+}
+
+function renderForm() {
+  const container = document.getElementById('formSections');
+  container.innerHTML = '';
+  template.schema.sections.forEach((section) => {
+    const fieldset = el('fieldset', {}, [el('legend', {}, section.title)]);
+    section.fields.forEach((field) => {
+      if (field.type === 'list') {
+        fieldset.appendChild(el('label', {}, field.label));
+        fieldset.appendChild(renderListField(field));
+      } else {
+        fieldset.appendChild(el('label', {}, field.label + (field.required ? ' *' : '')));
+        fieldset.appendChild(fieldControl(
+          field,
+          () => getPath(customer.config, field.key),
+          (v) => setPath(customer.config, field.key, v)
+        ));
+      }
+    });
+    container.appendChild(el('div', { class: 'card' }, fieldset));
+  });
+}
+
+async function saveConfig() {
+  await api('PUT', `/api/customers/${customerId}`, { config: customer.config });
+  toast('Saved');
+}
+
+async function load() {
+  customer = await api('GET', `/api/customers/${customerId}`);
+  const t = await api('GET', `/api/templates/${customer.templateId}`);
+  template = t;
+
+  document.getElementById('pageTitle').textContent = customer.name;
+  document.getElementById('pageSub').textContent = `${template.schema.label} · /sites/${customer.slug}/`;
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = customer.status;
+  badge.className = `badge ${customer.status}`;
+  document.getElementById('cName').value = customer.name;
+  document.getElementById('cDate').value = customer.occasionDate || '';
+  document.getElementById('cEmail').value = customer.email || '';
+  document.getElementById('cPhone').value = customer.phone || '';
+  document.getElementById('invoiceLink').href = `/invoices.html?customerId=${customerId}`;
+  if (customer.status === 'published' && customer.publicUrl) {
+    document.getElementById('publishResult').innerHTML =
+      `Live at <a class="link" href="${customer.publicUrl}" target="_blank">${customer.publicUrl}</a>`;
+  }
+
+  renderForm();
+}
+
+document.getElementById('saveContactBtn').addEventListener('click', async () => {
+  try {
+    await api('PUT', `/api/customers/${customerId}`, {
+      name: document.getElementById('cName').value,
+      occasionDate: document.getElementById('cDate').value,
+      email: document.getElementById('cEmail').value,
+      phone: document.getElementById('cPhone').value
+    });
+    toast('Contact info saved');
+    load();
+  } catch (err) { toast(err.message, true); }
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => saveConfig().catch(err => toast(err.message, true)));
+
+document.getElementById('previewBtn').addEventListener('click', async () => {
+  try {
+    await saveConfig();
+    window.open(`/preview/${customerId}`, '_blank');
+  } catch (err) { toast(err.message, true); }
+});
+
+document.getElementById('publishBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true;
+  btn.textContent = 'Publishing…';
+  try {
+    await saveConfig();
+    const result = await api('POST', `/api/customers/${customerId}/publish`);
+    document.getElementById('publishResult').innerHTML = result.published
+      ? `Published! Live at <a class="link" href="${result.publicUrl}" target="_blank">${result.publicUrl}</a>`
+      : result.message;
+    load();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Publish live';
+  }
+});
+
+load().catch(err => toast(err.message, true));
+</script>
+</body>
+</html>
