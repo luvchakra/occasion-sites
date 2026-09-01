@@ -12,28 +12,36 @@ page, and invoice separately.
 templates/    reusable site templates (currently: wedding) — bundled read-only
 sites/        published order websites, served via GitHub Pages
 admin/        the admin tool itself (Node/Express — runs locally or on Vercel)
-data/         customers, orders, invoices (committed — see Privacy below)
 ```
 
 Deployable two ways:
 - **Locally** on your own machine (`npm start`, open `http://localhost:4000`).
-- **On Vercel**, so it's reachable at a real URL. Either way, all data
-  (customers, invoices, uploaded photos, published sites) lives in THIS
-  GitHub repo, read and written through the GitHub API — there's no
-  separate database to run or back up.
+- **On Vercel**, so it's reachable at a real URL.
+
+Storage is split by what fits each job:
+- **Supabase (Postgres)** holds the structured business data — customers,
+  orders, invoices, occasions, business settings.
+- **GitHub** (this repo, via its API) holds templates, uploaded photos, and
+  published sites — GitHub Pages serves those directly, and publishing
+  reuses the same file blobs already committed, so it stays there.
 
 ## Setup (needed either way)
 
-1. Create a fine-grained GitHub Personal Access Token at
+1. Create a Supabase project (or use the one already set up for this repo)
+   and grab its **Project URL** and **service_role key** from
+   Project Settings → API.
+2. Create a fine-grained GitHub Personal Access Token at
    [github.com/settings/tokens](https://github.com/settings/tokens) with
    **Contents: Read and write** permission, scoped to just this repo.
-2. Set these environment variables (copy `admin/.env.example` to
+3. Set these environment variables (copy `admin/.env.example` to
    `admin/.env` for local use, or add them as Vercel Environment Variables
    for a deployment):
 
    | Variable | Value |
    |---|---|
-   | `GITHUB_TOKEN` | the token from step 1 |
+   | `SUPABASE_URL` | the Project URL from step 1 |
+   | `SUPABASE_SERVICE_ROLE_KEY` | the service_role key from step 1 (keep secret) |
+   | `GITHUB_TOKEN` | the token from step 2 |
    | `GITHUB_OWNER` | `luvchakra` |
    | `GITHUB_REPO` | `occasion-sites` |
    | `GITHUB_BRANCH` | `main` |
@@ -45,7 +53,7 @@ Deployable two ways:
 ```bash
 cd admin
 npm install
-cp .env.example .env   # then fill in GITHUB_TOKEN at minimum
+cp .env.example .env   # then fill in SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GITHUB_TOKEN
 npm start              # -> http://localhost:4000
 ```
 
@@ -77,14 +85,17 @@ A customer can have any number of orders — go back to their customer page any 
 
 ## Privacy
 
-`data/db.json` (customer names, emails, phone numbers, order/invoice
-amounts) and uploaded photos (`admin-data/uploads/`) are committed to this
-repo — **this repo is currently public** (required for free GitHub Pages
-on a personal account), which means that data is publicly readable right
-now, same as the code. Make the repo private as soon as you're
-comfortable — note that GitHub Pages on a *private* repo requires a paid
-GitHub plan (Pro/Team/Enterprise); on the free plan, going private takes
-every published order's site offline too.
+Customer names, emails, phone numbers, and order/invoice amounts live in
+Supabase, not in this repo — access is via the service_role key only, kept
+in server-side environment variables, never in the codebase or a browser.
+
+Uploaded photos (`admin-data/uploads/`) and published sites (`sites/`) are
+still committed to this repo — **this repo is currently public** (required
+for free GitHub Pages on a personal account), which means those images are
+publicly readable right now, same as the code. Make the repo private as
+soon as you're comfortable — note that GitHub Pages on a *private* repo
+requires a paid GitHub plan (Pro/Team/Enterprise); on the free plan, going
+private takes every published order's site offline too.
 
 ## Adding a new occasion type
 
