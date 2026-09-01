@@ -13,6 +13,7 @@ const templatesRouter = require('./routes/templates');
 const customersRouter = require('./routes/customers');
 const ordersRouter = require('./routes/orders');
 const invoicesRouter = require('./routes/invoices');
+const occasionsRouter = require('./routes/occasions');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -44,6 +45,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/templates', templatesRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/occasions', occasionsRouter);
 app.use('/api/invoices', invoicesRouter);
 
 const ah = (fn) => (req, res) => fn(req, res).catch((err) => {

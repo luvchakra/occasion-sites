@@ -81,10 +81,12 @@
 <script>
 async function load() {
   const id = qs('id');
-  const [invoice, settings] = await Promise.all([
+  const [invoice, settings, occasions] = await Promise.all([
     api('GET', `/api/invoices/${id}`),
-    api('GET', '/api/settings')
+    api('GET', '/api/settings'),
+    api('GET', '/api/occasions')
   ]);
+  const occasionLabel = (code) => (occasions.find((o) => o.code === code) || {}).label || code;
 
   document.getElementById('bizName').textContent = settings.businessName || 'Your Business';
   document.getElementById('bizDetails').textContent = [settings.address, settings.email, settings.phone].filter(Boolean).join('\n');
@@ -104,7 +106,7 @@ async function load() {
 
   const o = invoice.order;
   document.getElementById('orderBlock').innerHTML = o
-    ? `<strong>${o.title}</strong><br>${o.orderNumber} · ${o.occasionType}`
+    ? `<strong>${o.title}</strong><br>${o.orderNumber} · ${occasionLabel(o.occasionType)}`
     : '—';
 
   const rows = document.getElementById('itemRows');

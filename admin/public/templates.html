@@ -35,11 +35,18 @@
       <div class="grid-2">
         <div>
           <label>Label</label>
-          <input id="newLabel" type="text" placeholder="e.g. Birthday">
+          <input id="newLabel" type="text" placeholder="e.g. Modern Wedding">
         </div>
         <div>
-          <label>Occasion type (id)</label>
-          <input id="newOccasionType" type="text" placeholder="auto-generated from label if left blank">
+          <label>Occasion</label>
+          <div class="row" style="gap:8px; margin-top:0;">
+            <select id="newOccasion" style="flex:1;"></select>
+            <button type="button" class="btn secondary small" id="newOccasionToggle" style="margin-top:0;">+ New</button>
+          </div>
+          <div class="row" id="newOccasionForm" hidden style="gap:8px; margin-top:8px;">
+            <input id="newOccasionLabel" type="text" placeholder="e.g. Birthday" style="flex:1;">
+            <button type="button" class="btn small secondary" id="newOccasionAddBtn">Add</button>
+          </div>
         </div>
       </div>
       <label>Description (shown when picking a template)</label>
@@ -60,7 +67,22 @@
 </div>
 <script src="/app.js"></script>
 <script>
-async function load() {
+let occasions = [];
+
+function occasionLabel(code) {
+  const found = occasions.find((o) => o.code === code);
+  return found ? found.label : code;
+}
+
+async function loadOccasions(selectCode) {
+  occasions = await api('GET', '/api/occasions');
+  const sel = document.getElementById('newOccasion');
+  sel.innerHTML = occasions.map(o => `<option value="${o.code}">${o.label}</option>`).join('')
+    || '<option disabled>No occasions yet — add one</option>';
+  if (selectCode) sel.value = selectCode;
+}
+
+async function loadTemplates() {
   const templates = await api('GET', '/api/templates');
   const grid = document.getElementById('templateGrid');
   grid.innerHTML = '';
@@ -71,18 +93,39 @@ async function load() {
       el('p', {}, t.description || ''),
       el('div', { class: 'row' }, [
         el('a', { class: 'btn small secondary', href: `/preview-template/${t.id}`, target: '_blank' }, 'Preview'),
-        el('span', { class: 'field-hint', style: 'margin:0;' }, t.occasionType)
+        el('span', { class: 'field-hint', style: 'margin:0;' }, occasionLabel(t.occasionType))
       ])
     ]));
   });
 }
 
+document.getElementById('newOccasionToggle').addEventListener('click', () => {
+  const form = document.getElementById('newOccasionForm');
+  form.hidden = !form.hidden;
+  if (!form.hidden) document.getElementById('newOccasionLabel').focus();
+});
+
+document.getElementById('newOccasionAddBtn').addEventListener('click', async () => {
+  const label = document.getElementById('newOccasionLabel').value.trim();
+  if (!label) return toast('Enter an occasion name first', true);
+  try {
+    const occasion = await api('POST', '/api/occasions', { label });
+    await loadOccasions(occasion.code);
+    document.getElementById('newOccasionLabel').value = '';
+    document.getElementById('newOccasionForm').hidden = true;
+    toast(`Occasion "${occasion.label}" added`);
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
 document.getElementById('uploadBtn').addEventListener('click', async () => {
   const label = document.getElementById('newLabel').value.trim();
-  const occasionType = document.getElementById('newOccasionType').value.trim();
+  const occasionCode = document.getElementById('newOccasion').value;
   const description = document.getElementById('newDescription').value.trim();
   const file = document.getElementById('newZip').files[0];
   if (!label) return toast('Enter a label first', true);
+  if (!occasionCode) return toast('Choose (or add) an occasion first', true);
   if (!file) return toast('Choose a zip file first', true);
 
   const btn = document.getElementById('uploadBtn');
@@ -93,7 +136,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
   try {
     const form = new FormData();
     form.append('label', label);
-    if (occasionType) form.append('occasionType', occasionType);
+    form.append('occasionCode', occasionCode);
     form.append('description', description);
     form.append('zipfile', file);
     const res = await fetch('/api/templates', { method: 'POST', body: form });
@@ -108,10 +151,9 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
       ]));
     }
     document.getElementById('newLabel').value = '';
-    document.getElementById('newOccasionType').value = '';
     document.getElementById('newDescription').value = '';
     document.getElementById('newZip').value = '';
-    load();
+    loadTemplates();
   } catch (err) {
     toast(err.message, true);
   } finally {
@@ -120,7 +162,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
   }
 });
 
-load().catch(err => toast(err.message, true));
+loadOccasions().then(loadTemplates).catch(err => toast(err.message, true));
 </script>
 </body>
 </html>

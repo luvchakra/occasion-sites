@@ -3,6 +3,7 @@ const multer = require('multer');
 const AdmZip = require('adm-zip');
 const gh = require('../lib/github');
 const { listTemplates, getTemplate } = require('../lib/templates');
+const { listOccasions } = require('../lib/occasions');
 const { slugify } = require('../lib/id');
 const { extractConfigObject, buildSchema } = require('../lib/schema-from-config');
 
@@ -38,15 +39,24 @@ router.get('/:id', ah(async (req, res) => {
 // Upload a new template as a zip (an index.html following the SITE_CONFIG
 // convention, plus its images/video). The admin form schema is generated
 // automatically from the config's own default values — see
-// lib/schema-from-config.js and TEMPLATE_AUTHORING.md.
+// lib/schema-from-config.js and TEMPLATE_AUTHORING.md. The occasion is a
+// code chosen from the managed occasions list (see routes/occasions.js),
+// not free text — several templates can share one occasion (e.g. two
+// different wedding designs).
 router.post('/', upload.single('zipfile'), ah(async (req, res) => {
-  const { label, description } = req.body;
+  const { label, description, occasionCode } = req.body;
   if (!req.file) return res.status(400).json({ error: 'No zip file uploaded' });
   if (!label) return res.status(400).json({ error: 'label is required' });
+  if (!occasionCode) return res.status(400).json({ error: 'occasionCode is required' });
 
-  const occasionType = slugify(req.body.occasionType || label);
-  if (await getTemplate(occasionType)) {
-    return res.status(400).json({ error: `A template called "${occasionType}" already exists.` });
+  const occasions = await listOccasions();
+  if (!occasions.some((o) => o.code === occasionCode)) {
+    return res.status(400).json({ error: `Unknown occasion: ${occasionCode}` });
+  }
+
+  const templateId = slugify(label);
+  if (await getTemplate(templateId)) {
+    return res.status(400).json({ error: `A template called "${templateId}" already exists.` });
   }
 
   const zip = new AdmZip(req.file.buffer);
@@ -69,7 +79,7 @@ router.post('/', upload.single('zipfile'), ah(async (req, res) => {
   const { sections, warnings } = buildSchema(config);
 
   const schema = {
-    occasionType,
+    occasionType: occasionCode,
     label,
     description: description || '',
     templateFile: 'index.html',
@@ -78,7 +88,7 @@ router.post('/', upload.single('zipfile'), ah(async (req, res) => {
     defaultConfig: config
   };
 
-  const dir = `templates/${occasionType}`;
+  const dir = `templates/${templateId}`;
   const files = [
     { path: `${dir}/index.html`, content: Buffer.from(html) },
     { path: `${dir}/template.json`, content: Buffer.from(JSON.stringify(schema, null, 2)) }
@@ -90,7 +100,7 @@ router.post('/', upload.single('zipfile'), ah(async (req, res) => {
 
   await gh.commitFiles(files, `Add template: ${label}`);
 
-  res.status(201).json({ id: occasionType, schema, warnings });
+  res.status(201).json({ id: templateId, schema, warnings });
 }));
 
 module.exports = router;

@@ -59,15 +59,19 @@
           <input id="newTitle" type="text" placeholder="e.g. Kabir & Ananya's Wedding Site">
         </div>
         <div>
-          <label>Occasion template</label>
+          <label>Occasion date</label>
+          <input id="newOccasionDate" type="date">
+        </div>
+        <div>
+          <label>Occasion</label>
+          <select id="newOccasion" style="width:100%;"></select>
+        </div>
+        <div>
+          <label>Template</label>
           <div class="row" style="gap:8px; margin-top:0;">
             <select id="newTemplate" style="flex:1;"></select>
             <a class="btn secondary small" id="previewTemplateLink" href="#" target="_blank" style="margin-top:0;">Preview</a>
           </div>
-        </div>
-        <div>
-          <label>Occasion date</label>
-          <input id="newOccasionDate" type="date">
         </div>
       </div>
       <div class="row" style="margin-top:16px;">
@@ -93,14 +97,37 @@
 <script>
 const customerId = qs('id');
 let templates = [];
+let occasions = [];
+
+function occasionLabel(code) {
+  const found = occasions.find((o) => o.code === code);
+  return found ? found.label : code;
+}
 
 async function loadTemplates() {
-  templates = await api('GET', '/api/templates');
+  [occasions, templates] = await Promise.all([
+    api('GET', '/api/occasions'),
+    api('GET', '/api/templates')
+  ]);
+
+  const occSel = document.getElementById('newOccasion');
+  occSel.innerHTML = occasions.map(o => `<option value="${o.code}">${o.label}</option>`).join('')
+    || '<option disabled>No occasions yet — add one on the Templates page</option>';
+  occSel.addEventListener('change', updateTemplateOptions);
+  updateTemplateOptions();
+}
+
+// The template list is scoped to whichever occasion is selected — pick
+// the occasion first, then which matching template design to use.
+function updateTemplateOptions() {
+  const occasionCode = document.getElementById('newOccasion').value;
+  const matching = templates.filter((t) => t.occasionType === occasionCode);
   const sel = document.getElementById('newTemplate');
-  sel.innerHTML = templates.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
-    || '<option disabled>No templates found</option>';
-  updatePreviewLink();
+  sel.innerHTML = matching.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
+    || '<option disabled>No templates for this occasion yet</option>';
+  sel.removeEventListener('change', updatePreviewLink);
   sel.addEventListener('change', updatePreviewLink);
+  updatePreviewLink();
 }
 
 function updatePreviewLink() {
@@ -140,7 +167,7 @@ async function loadOrders() {
       const tr = el('tr', {}, [
         el('td', { 'data-label': 'Order #' }, o.orderNumber),
         el('td', { 'data-label': 'Title' }, el('a', { class: 'link', href: `/order.html?id=${o.id}` }, o.title)),
-        el('td', { 'data-label': 'Occasion' }, o.occasionType),
+        el('td', { 'data-label': 'Occasion' }, occasionLabel(o.occasionType)),
         el('td', { 'data-label': 'Status' }, el('span', { class: `badge ${o.status}` }, o.status)),
         el('td', { 'data-label': 'Updated' }, o.updatedAt ? new Date(o.updatedAt).toLocaleString() : ''),
         el('td', { 'data-label': 'Preview' }, previewPicker(o)),

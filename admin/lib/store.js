@@ -7,7 +7,7 @@ const gh = require('./github');
 const { newId } = require('./id');
 
 const DB_PATH = 'data/db.json';
-const EMPTY_DB = { customers: [], orders: [], invoices: [], counters: { invoice: 0, order: 0 }, settings: {} };
+const EMPTY_DB = { customers: [], orders: [], invoices: [], occasions: [], counters: { invoice: 0, order: 0 }, settings: {} };
 
 // One-time, idempotent upgrade from the old shape (one "customer" record
 // WAS one site: name/email/phone + occasionType/templateId/config/slug all
@@ -73,12 +73,16 @@ function migrate(db) {
   return db;
 }
 
+function withDefaults(db) {
+  db.settings = db.settings || {};
+  db.occasions = db.occasions || [];
+  return db;
+}
+
 async function load() {
   const file = await gh.getFile(DB_PATH);
   if (!file) return structuredClone(EMPTY_DB);
-  const db = migrate(JSON.parse(file.content));
-  db.settings = db.settings || {};
-  return db;
+  return withDefaults(migrate(JSON.parse(file.content)));
 }
 
 // Reads the db, lets `fn` mutate it, then commits the result back to
@@ -87,8 +91,7 @@ async function load() {
 // never silent data loss.
 async function withDb(fn) {
   const file = await gh.getFile(DB_PATH);
-  const db = file ? migrate(JSON.parse(file.content)) : structuredClone(EMPTY_DB);
-  db.settings = db.settings || {};
+  const db = file ? withDefaults(migrate(JSON.parse(file.content))) : structuredClone(EMPTY_DB);
   const result = await fn(db);
   await gh.putFile(DB_PATH, Buffer.from(JSON.stringify(db, null, 2)), 'Update admin data', file ? file.sha : undefined);
   return result;
