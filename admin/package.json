@@ -4,6 +4,9 @@
   "private": true,
   "description": "Admin tool for building and publishing customer occasion websites (weddings, birthdays, etc.) from configurable templates.",
   "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"

@@ -1,8 +1,4 @@
-# Uploaded photo staging (pre-publish duplicates of images already
-# committed under /sites once published) — not tracked to keep the repo
-# lean. Customer/invoice data (data/db.json) IS tracked; see README.
-admin/uploads/
-
 admin/node_modules/
 admin/.env
+admin/.vercel/
 .DS_Store

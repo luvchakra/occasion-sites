@@ -1,40 +1,32 @@
-// Tiny JSON-file database. No server, no native deps — fine for a
-// single-admin tool with a modest number of customers.
-//
-// IMPORTANT: this file (data/db.json) contains customer PII (name, email,
-// phone) and money amounts (invoices). It is gitignored on purpose — the
-// occasion-sites repo is public (needed for free GitHub Pages), and only
-// the *published sites* under /sites are meant to be public, never this
-// data file.
+// Customer/invoice data now lives at data/db.json IN THE GITHUB REPO
+// (see README's Privacy section for why) instead of a local file — a
+// Vercel deployment has no persistent local disk, so anything that must
+// survive between requests has to be committed to the repo.
 
-const fs = require('fs');
-const path = require('path');
+const gh = require('./github');
 
-const DB_PATH = path.join(__dirname, '..', '..', 'data', 'db.json');
+const DB_PATH = 'data/db.json';
+const EMPTY_DB = { customers: [], invoices: [], counters: { invoice: 0 }, settings: {} };
 
-const EMPTY_DB = { customers: [], invoices: [], counters: { invoice: 0 } };
-
-function load() {
-  if (!fs.existsSync(DB_PATH)) {
-    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    fs.writeFileSync(DB_PATH, JSON.stringify(EMPTY_DB, null, 2));
-  }
-  const raw = fs.readFileSync(DB_PATH, 'utf8');
-  return raw.trim() ? JSON.parse(raw) : structuredClone(EMPTY_DB);
+async function load() {
+  const file = await gh.getFile(DB_PATH);
+  if (!file) return structuredClone(EMPTY_DB);
+  const db = JSON.parse(file.content);
+  db.settings = db.settings || {};
+  return db;
 }
 
-function save(db) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-}
-
-// All access goes through withDb to keep read-modify-write atomic within
-// this single Node process (no concurrent-writer protection is needed for
-// a solo admin tool run locally).
-function withDb(fn) {
-  const db = load();
-  const result = fn(db);
-  save(db);
+// Reads the db, lets `fn` mutate it, then commits the result back to
+// GitHub. Not safe against two truly concurrent writers (a rare case for a
+// solo admin tool) — a race shows up as a normal failed request to retry,
+// never silent data loss.
+async function withDb(fn) {
+  const file = await gh.getFile(DB_PATH);
+  const db = file ? JSON.parse(file.content) : structuredClone(EMPTY_DB);
+  db.settings = db.settings || {};
+  const result = await fn(db);
+  await gh.putFile(DB_PATH, Buffer.from(JSON.stringify(db, null, 2)), 'Update admin data', file ? file.sha : undefined);
   return result;
 }
 
-module.exports = { load, save, withDb };
+module.exports = { load, withDb };
