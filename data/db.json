@@ -1,0 +1,102 @@
+{
+  "customers": [
+    {
+      "id": "cust_0a255ac2da95",
+      "name": "Kabir & Ananya",
+      "email": "kabir.ananya@example.com",
+      "phone": "",
+      "occasionType": "wedding",
+      "templateId": "wedding",
+      "slug": "kabir-ananya",
+      "occasionDate": "2027-02-21",
+      "status": "published",
+      "publishedPath": "sites/kabir-ananya",
+      "config": {
+        "couple": {
+          "brideName": "Ananya",
+          "groomName": "Kabir",
+          "mainPhoto": "",
+          "introText": "What began as a chance meeting over shared laughter has become a lifetime we get to choose, again and again. From late-night conversations to quiet Sunday mornings, we've found in each other a home. Now, we can't wait to begin our forever — surrounded by the people who mean the most to us."
+        },
+        "wedding": {
+          "heartDay": "21st",
+          "heartMonth": "Feb",
+          "heartYear": "2027",
+          "time": "5:00 PM",
+          "displayDate": "21 February 2027",
+          "location": "Goa",
+          "venueName": "Cliffside Pavilion",
+          "venueAddress": "Goa, India",
+          "googleMapsEmbedUrl": "https://www.google.com/maps?q=Goa,India&output=embed",
+          "googleMapsDirectionsUrl": "https://www.google.com/maps/search/?api=1&query=Goa,India",
+          "countdownDateTime": "2027-02-21T17:00:00"
+        },
+        "events": [],
+        "story": {
+          "quote": ""
+        },
+        "gallery": [
+          {
+            "photo": "images/gallery-1-1788265444797.jpg",
+            "caption": "Golden Hour"
+          }
+        ],
+        "dressCodeImage": "",
+        "rsvp": {
+          "contactName": "Kabir & Ananya",
+          "whatsapp": "",
+          "email": "",
+          "infoText": "Please respond by 1st February 2027",
+          "googleFormActionUrl": "",
+          "entryIds": {
+            "name": "",
+            "attend": "",
+            "guests": "",
+            "message": ""
+          }
+        },
+        "social": {
+          "instagram": "",
+          "whatsapp": "",
+          "other": []
+        }
+      },
+      "createdAt": "2026-09-01T12:23:55.178Z",
+      "updatedAt": "2026-09-01T12:24:10.820Z",
+      "publicUrl": "https://luvchakra.github.io/occasion-sites/sites/kabir-ananya/"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv_4ff1c6f87b10",
+      "invoiceNumber": "INV-0001",
+      "customerId": "cust_0a255ac2da95",
+      "issueDate": "2026-09-01",
+      "dueDate": "2027-01-15",
+      "items": [
+        {
+          "description": "Wedding site design & setup",
+          "qty": 1,
+          "unitPrice": 15000
+        },
+        {
+          "description": "Hosting & 1 year support",
+          "qty": 1,
+          "unitPrice": 3000
+        }
+      ],
+      "notes": "Thank you for choosing us!",
+      "status": "draft",
+      "createdAt": "2026-09-01T12:24:24.820Z",
+      "updatedAt": "2026-09-01T12:24:24.820Z"
+    }
+  ],
+  "counters": {
+    "invoice": 1
+  },
+  "settings": {
+    "businessName": "Luv Chakra Occasion Sites",
+    "email": "luvchakra@gmail.com",
+    "paymentDetails": "UPI / bank details go here"
+  }
+}

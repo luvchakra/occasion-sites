@@ -9,7 +9,7 @@ a live page, and send them a basic invoice.
 templates/    reusable site templates (currently: wedding)
 sites/        published customer websites, served via GitHub Pages
 admin/        the admin tool itself (Node/Express, runs locally)
-data/         customer records + invoices (gitignored — private, not on GitHub)
+data/         customer records + invoices (committed — see Privacy below)
 ```
 
 ## Running the admin tool
@@ -41,11 +41,18 @@ So: run the admin tool from inside a normal clone of this repo where
 
 ## Privacy
 
-`data/` (customer names, emails, phone numbers, invoice amounts) and
-`admin/uploads/` (photos before they're attached to a published site) are
-gitignored on purpose. This repo is public (required for free GitHub
-Pages) — only the **published sites** under `/sites` are meant to be
-public. Back up `data/db.json` yourself (it's not on GitHub).
+`data/db.json` (customer names, emails, phone numbers, invoice amounts) is
+committed to this repo so it's backed up automatically — but **this repo
+is currently public** (required for free GitHub Pages on a personal
+account), which means that data is publicly readable right now, same as
+the code. Make the repo private as soon as you're comfortable — note that
+GitHub Pages on a *private* repo requires a paid plan (Pro/Team/
+Enterprise); on the free plan, going private takes every published
+customer site offline too.
+
+`admin/uploads/` (photos staged before a customer's site is published) is
+still gitignored — it's just pre-publish duplicates of images that get
+committed under `/sites` once published, not worth tracking.
 
 ## Adding a new occasion type
 

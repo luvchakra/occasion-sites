@@ -1,6 +1,6 @@
-# Customer data (PII) and uploaded photo staging — never committed to this
-# public repo. Only rendered output under /sites is meant to be public.
-data/
+# Uploaded photo staging (pre-publish duplicates of images already
+# committed under /sites once published) — not tracked to keep the repo
+# lean. Customer/invoice data (data/db.json) IS tracked; see README.
 admin/uploads/
 
 admin/node_modules/
