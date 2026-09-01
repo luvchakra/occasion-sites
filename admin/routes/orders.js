@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const gh = require('../lib/github');
-const { supabase, orThrow, mapOrder } = require('../lib/db');
+const { withDb } = require('../lib/store');
 const { getTemplate } = require('../lib/templates');
 const { newId, slugify } = require('../lib/id');
 const { publishOrder } = require('../lib/publish');
@@ -23,18 +23,18 @@ const upload = multer({
 const ah = (fn) => (req, res) => fn(req, res).catch((err) => res.status(err.status === 404 ? 404 : 500).json({ error: err.message }));
 
 router.get('/', ah(async (req, res) => {
-  let query = supabase.from('orders').select('*');
-  if (req.query.customerId) query = query.eq('customer_id', req.query.customerId);
-  const { data, error } = await query;
-  orThrow(error);
-  res.json(data.map(mapOrder));
+  const db = await withDb((d) => d);
+  const list = req.query.customerId
+    ? db.orders.filter((o) => o.customerId === req.query.customerId)
+    : db.orders;
+  res.json(list);
 }));
 
 router.get('/:id', ah(async (req, res) => {
-  const { data, error } = await supabase.from('orders').select('*').eq('id', req.params.id).maybeSingle();
-  orThrow(error);
-  if (!data) return res.status(404).json({ error: 'Order not found' });
-  res.json(mapOrder(data));
+  const db = await withDb((d) => d);
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  res.json(order);
 }));
 
 router.post('/', ah(async (req, res) => {
@@ -45,62 +45,63 @@ router.post('/', ah(async (req, res) => {
   const template = await getTemplate(templateId);
   if (!template) return res.status(400).json({ error: `Unknown template: ${templateId}` });
 
-  const { data: customer, error: cErr } = await supabase.from('customers').select('id').eq('id', customerId).maybeSingle();
-  orThrow(cErr);
-  if (!customer) return res.status(400).json({ error: 'Unknown customerId' });
+  const order = await withDb((db) => {
+    if (!db.customers.some((c) => c.id === customerId)) return null;
 
-  const { data: existingSlugs, error: sErr } = await supabase.from('orders').select('slug');
-  orThrow(sErr);
-  const taken = new Set(existingSlugs.map((o) => o.slug));
-  const baseSlug = slugify(slug || title);
-  let finalSlug = baseSlug;
-  let n = 2;
-  while (taken.has(finalSlug)) finalSlug = `${baseSlug}-${n++}`;
+    const baseSlug = slugify(slug || title);
+    let finalSlug = baseSlug;
+    let n = 2;
+    while (db.orders.some((o) => o.slug === finalSlug)) finalSlug = `${baseSlug}-${n++}`;
 
-  const { data: orderNumber, error: nErr } = await supabase.rpc('next_order_number');
-  orThrow(nErr);
-
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('orders')
-    .insert({
+    db.counters.order += 1;
+    const record = {
       id: newId('order'),
-      order_number: orderNumber,
-      customer_id: customerId,
+      orderNumber: `ORD-${String(db.counters.order).padStart(4, '0')}`,
+      customerId,
       title,
-      occasion_type: template.schema.occasionType,
-      template_id: templateId,
+      occasionType: template.schema.occasionType,
+      templateId,
       slug: finalSlug,
-      occasion_date: occasionDate || null,
+      occasionDate: occasionDate || '',
       status: 'draft',
-      published_path: '',
-      public_url: '',
+      publishedPath: '',
+      publicUrl: '',
       config: structuredClone(template.schema.defaultConfig || {}),
-      created_at: now,
-      updated_at: now
-    })
-    .select()
-    .single();
-  orThrow(error);
-  res.status(201).json(mapOrder(data));
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    db.orders.push(record);
+    return record;
+  });
+
+  if (!order) return res.status(400).json({ error: 'Unknown customerId' });
+  res.status(201).json(order);
 }));
 
 router.put('/:id', ah(async (req, res) => {
   const { title, occasionDate, config } = req.body;
-  const patch = { updated_at: new Date().toISOString() };
-  if (title !== undefined) patch.title = title;
-  if (occasionDate !== undefined) patch.occasion_date = occasionDate || null;
-  if (config !== undefined) patch.config = config;
-  const { data, error } = await supabase.from('orders').update(patch).eq('id', req.params.id).select().maybeSingle();
-  orThrow(error);
-  if (!data) return res.status(404).json({ error: 'Order not found' });
-  res.json(mapOrder(data));
+  const order = await withDb((db) => {
+    const o = db.orders.find((x) => x.id === req.params.id);
+    if (!o) return null;
+    if (title !== undefined) o.title = title;
+    if (occasionDate !== undefined) o.occasionDate = occasionDate;
+    if (config !== undefined) o.config = config;
+    o.updatedAt = new Date().toISOString();
+    return o;
+  });
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  res.json(order);
 }));
 
 router.delete('/:id', ah(async (req, res) => {
-  const { data: deleted, error } = await supabase.from('orders').delete().eq('id', req.params.id).select();
-  orThrow(error);
-  if (!deleted.length) return res.status(404).json({ error: 'Order not found' });
+  const removed = await withDb((db) => {
+    const idx = db.orders.findIndex((o) => o.id === req.params.id);
+    if (idx === -1) return false;
+    db.orders.splice(idx, 1);
+    db.invoices = db.invoices.filter((inv) => inv.orderId !== req.params.id);
+    return true;
+  });
+  if (!removed) return res.status(404).json({ error: 'Order not found' });
   await gh.deleteDir(`${UPLOADS_PREFIX}/${req.params.id}`, `Remove uploads for deleted order ${req.params.id}`);
   res.status(204).end();
 }));
@@ -124,17 +125,18 @@ router.get('/:id/photos', ah(async (req, res) => {
 }));
 
 router.post('/:id/publish', ah(async (req, res) => {
-  const { data, error } = await supabase.from('orders').select('*').eq('id', req.params.id).maybeSingle();
-  orThrow(error);
-  if (!data) return res.status(404).json({ error: 'Order not found' });
-  const order = mapOrder(data);
+  const db = await withDb((d) => d);
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
   const result = await publishOrder(order);
   const publicUrl = `${process.env.PUBLIC_BASE_URL || ''}/${order.slug}/`;
-  const { error: uErr } = await supabase
-    .from('orders')
-    .update({ status: 'published', published_path: result.path || order.publishedPath, public_url: publicUrl, updated_at: new Date().toISOString() })
-    .eq('id', req.params.id);
-  orThrow(uErr);
+  await withDb((d) => {
+    const o = d.orders.find((x) => x.id === req.params.id);
+    o.status = 'published';
+    o.publishedPath = result.path || o.publishedPath;
+    o.publicUrl = publicUrl;
+    o.updatedAt = new Date().toISOString();
+  });
   res.json({ ...result, publicUrl });
 }));
 

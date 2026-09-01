@@ -1,5 +1,5 @@
 const express = require('express');
-const { supabase, orThrow } = require('../lib/db');
+const { withDb } = require('../lib/store');
 const { listOccasions } = require('../lib/occasions');
 const { slugify } = require('../lib/id');
 
@@ -16,13 +16,15 @@ router.post('/', ah(async (req, res) => {
   if (!label) return res.status(400).json({ error: 'label is required' });
   const code = slugify(label);
 
-  const { data: existing, error: eErr } = await supabase.from('occasions').select('*').eq('code', code).maybeSingle();
-  orThrow(eErr);
-  if (existing) return res.status(201).json({ code: existing.code, label: existing.label });
+  const occasion = await withDb((db) => {
+    const existing = db.occasions.find((o) => o.code === code);
+    if (existing) return existing;
+    const record = { code, label };
+    db.occasions.push(record);
+    return record;
+  });
 
-  const { data, error } = await supabase.from('occasions').insert({ code, label }).select().single();
-  orThrow(error);
-  res.status(201).json({ code: data.code, label: data.label });
+  res.status(201).json(occasion);
 }));
 
 module.exports = router;

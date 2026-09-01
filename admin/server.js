@@ -5,7 +5,7 @@ const express = require('express');
 loadEnvFile(path.join(__dirname, '.env'));
 
 const gh = require('./lib/github');
-const { supabase, orThrow, mapSettings } = require('./lib/db');
+const { withDb } = require('./lib/store');
 const { getTemplate, getTemplateHtml } = require('./lib/templates');
 const { renderSite } = require('./lib/render');
 
@@ -55,29 +55,23 @@ const ah = (fn) => (req, res) => fn(req, res).catch((err) => {
 
 // Business profile shown on invoices (name/address/contact for the letterhead).
 app.get('/api/settings', ah(async (req, res) => {
-  const { data, error } = await supabase.from('settings').select('*').eq('id', true).maybeSingle();
-  orThrow(error);
-  res.json(mapSettings(data));
+  const db = await withDb((d) => d);
+  res.json(db.settings || {});
 }));
 app.put('/api/settings', ah(async (req, res) => {
-  const { businessName, address, email, phone, paymentDetails } = req.body;
-  const patch = {};
-  if (businessName !== undefined) patch.business_name = businessName;
-  if (address !== undefined) patch.address = address;
-  if (email !== undefined) patch.email = email;
-  if (phone !== undefined) patch.phone = phone;
-  if (paymentDetails !== undefined) patch.payment_details = paymentDetails;
-  const { data, error } = await supabase.from('settings').update(patch).eq('id', true).select().single();
-  orThrow(error);
-  res.json(mapSettings(data));
+  const settings = await withDb((db) => {
+    db.settings = { ...(db.settings || {}), ...req.body };
+    return db.settings;
+  });
+  res.json(settings);
 }));
 
 // Serves the photo thumbnails shown while editing an order's form: this
 // order's uploads first, falling back to the template's own
 // default/backdrop assets.
 app.get('/preview-assets/:orderId/:type/:filename', ah(async (req, res) => {
-  const { data: order, error } = await supabase.from('orders').select('id, template_id').eq('id', req.params.orderId).maybeSingle();
-  orThrow(error);
+  const db = await withDb((d) => d);
+  const order = db.orders.find((o) => o.id === req.params.orderId);
   if (!order) return res.status(404).end();
   const { type, filename } = req.params;
   const contentType = MIME_TYPES[path.extname(filename).toLowerCase()] || 'application/octet-stream';
@@ -91,7 +85,7 @@ app.get('/preview-assets/:orderId/:type/:filename', ah(async (req, res) => {
       if (err.status !== 404) throw err;
     }
   }
-  const template = await getTemplate(order.template_id);
+  const template = await getTemplate(order.templateId);
   if (!template) return res.status(404).end();
   try {
     const buf = await gh.getFileBuffer(`${template.dir}/assets/${type}/${filename}`);

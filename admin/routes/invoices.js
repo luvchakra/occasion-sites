@@ -1,5 +1,5 @@
 const express = require('express');
-const { supabase, orThrow, mapInvoice, mapOrder, mapCustomer } = require('../lib/db');
+const { withDb } = require('../lib/store');
 const { newId } = require('../lib/id');
 
 const router = express.Router();
@@ -11,30 +11,19 @@ function total(items) {
 }
 
 router.get('/', ah(async (req, res) => {
-  let query = supabase.from('invoices').select('*');
-  if (req.query.orderId) query = query.eq('order_id', req.query.orderId);
-  const { data, error } = await query;
-  orThrow(error);
-  res.json(data.map((i) => ({ ...mapInvoice(i), total: total(i.items) })));
+  const db = await withDb((d) => d);
+  const list = req.query.orderId
+    ? db.invoices.filter((i) => i.orderId === req.query.orderId)
+    : db.invoices;
+  res.json(list.map((i) => ({ ...i, total: total(i.items) })));
 }));
 
 router.get('/:id', ah(async (req, res) => {
-  const { data: invRow, error } = await supabase.from('invoices').select('*').eq('id', req.params.id).maybeSingle();
-  orThrow(error);
-  if (!invRow) return res.status(404).json({ error: 'Invoice not found' });
-  const invoice = mapInvoice(invRow);
-
-  let order = null;
-  let customer = null;
-  const { data: orderRow, error: oErr } = await supabase.from('orders').select('*').eq('id', invoice.orderId).maybeSingle();
-  orThrow(oErr);
-  if (orderRow) {
-    order = mapOrder(orderRow);
-    const { data: custRow, error: cErr } = await supabase.from('customers').select('*').eq('id', order.customerId).maybeSingle();
-    orThrow(cErr);
-    if (custRow) customer = mapCustomer(custRow);
-  }
-
+  const db = await withDb((d) => d);
+  const invoice = db.invoices.find((i) => i.id === req.params.id);
+  if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+  const order = db.orders.find((o) => o.id === invoice.orderId) || null;
+  const customer = order ? db.customers.find((c) => c.id === order.customerId) || null : null;
   res.json({ ...invoice, total: total(invoice.items), order, customer });
 }));
 
@@ -42,54 +31,54 @@ router.post('/', ah(async (req, res) => {
   const { orderId, issueDate, dueDate, items, notes, status } = req.body;
   if (!orderId) return res.status(400).json({ error: 'orderId is required' });
 
-  const { data: order, error: oErr } = await supabase.from('orders').select('id').eq('id', orderId).maybeSingle();
-  orThrow(oErr);
-  if (!order) return res.status(400).json({ error: 'Unknown orderId' });
-
-  const { data: invoiceNumber, error: nErr } = await supabase.rpc('next_invoice_number');
-  orThrow(nErr);
-
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('invoices')
-    .insert({
+  const invoice = await withDb((db) => {
+    if (!db.orders.some((o) => o.id === orderId)) return null;
+    db.counters.invoice += 1;
+    const record = {
       id: newId('inv'),
-      invoice_number: invoiceNumber,
-      order_id: orderId,
-      issue_date: issueDate || new Date().toISOString().slice(0, 10),
-      due_date: dueDate || null,
+      invoiceNumber: `INV-${String(db.counters.invoice).padStart(4, '0')}`,
+      orderId,
+      issueDate: issueDate || new Date().toISOString().slice(0, 10),
+      dueDate: dueDate || '',
       items: Array.isArray(items) ? items : [],
       notes: notes || '',
       status: status || 'draft',
-      created_at: now,
-      updated_at: now
-    })
-    .select()
-    .single();
-  orThrow(error);
-  const invoice = mapInvoice(data);
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    db.invoices.push(record);
+    return record;
+  });
+
+  if (!invoice) return res.status(400).json({ error: 'Unknown orderId' });
   res.status(201).json({ ...invoice, total: total(invoice.items) });
 }));
 
 router.put('/:id', ah(async (req, res) => {
   const { issueDate, dueDate, items, notes, status } = req.body;
-  const patch = { updated_at: new Date().toISOString() };
-  if (issueDate !== undefined) patch.issue_date = issueDate || null;
-  if (dueDate !== undefined) patch.due_date = dueDate || null;
-  if (items !== undefined) patch.items = items;
-  if (notes !== undefined) patch.notes = notes;
-  if (status !== undefined) patch.status = status;
-  const { data, error } = await supabase.from('invoices').update(patch).eq('id', req.params.id).select().maybeSingle();
-  orThrow(error);
-  if (!data) return res.status(404).json({ error: 'Invoice not found' });
-  const invoice = mapInvoice(data);
+  const invoice = await withDb((db) => {
+    const inv = db.invoices.find((i) => i.id === req.params.id);
+    if (!inv) return null;
+    if (issueDate !== undefined) inv.issueDate = issueDate;
+    if (dueDate !== undefined) inv.dueDate = dueDate;
+    if (items !== undefined) inv.items = items;
+    if (notes !== undefined) inv.notes = notes;
+    if (status !== undefined) inv.status = status;
+    inv.updatedAt = new Date().toISOString();
+    return inv;
+  });
+  if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
   res.json({ ...invoice, total: total(invoice.items) });
 }));
 
 router.delete('/:id', ah(async (req, res) => {
-  const { data: deleted, error } = await supabase.from('invoices').delete().eq('id', req.params.id).select();
-  orThrow(error);
-  if (!deleted.length) return res.status(404).json({ error: 'Invoice not found' });
+  const removed = await withDb((db) => {
+    const idx = db.invoices.findIndex((i) => i.id === req.params.id);
+    if (idx === -1) return false;
+    db.invoices.splice(idx, 1);
+    return true;
+  });
+  if (!removed) return res.status(404).json({ error: 'Invoice not found' });
   res.status(204).end();
 }));
 
