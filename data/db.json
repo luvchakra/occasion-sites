@@ -64,6 +64,65 @@
       "createdAt": "2026-09-01T12:23:55.178Z",
       "updatedAt": "2026-09-01T13:51:05.924Z",
       "publicUrl": "https://luvchakra.github.io/occasion-sites/sites/kabir-ananya/"
+    },
+    {
+      "id": "cust_5c30c1f80b8e",
+      "name": "Ranbir and Aliya",
+      "email": "",
+      "phone": "",
+      "occasionType": "wedding",
+      "templateId": "wedding",
+      "slug": "ranbir-and-aliya",
+      "occasionDate": "",
+      "status": "draft",
+      "publishedPath": "",
+      "config": {
+        "couple": {
+          "brideName": "",
+          "groomName": "",
+          "mainPhoto": "",
+          "introText": ""
+        },
+        "wedding": {
+          "heartDay": "",
+          "heartMonth": "",
+          "heartYear": "",
+          "time": "",
+          "displayDate": "",
+          "location": "",
+          "venueName": "",
+          "venueAddress": "",
+          "googleMapsEmbedUrl": "",
+          "googleMapsDirectionsUrl": "",
+          "countdownDateTime": ""
+        },
+        "events": [],
+        "story": {
+          "quote": ""
+        },
+        "gallery": [],
+        "dressCodeImage": "",
+        "rsvp": {
+          "contactName": "",
+          "whatsapp": "",
+          "email": "",
+          "infoText": "",
+          "googleFormActionUrl": "",
+          "entryIds": {
+            "name": "",
+            "attend": "",
+            "guests": "",
+            "message": ""
+          }
+        },
+        "social": {
+          "instagram": "",
+          "whatsapp": "",
+          "other": []
+        }
+      },
+      "createdAt": "2026-09-01T13:52:12.440Z",
+      "updatedAt": "2026-09-01T13:52:12.440Z"
     }
   ],
   "invoices": [
