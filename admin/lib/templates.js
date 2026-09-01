@@ -1,36 +1,39 @@
-// Reads template definitions from /templates/<occasionType>/.
-// A template is just a folder containing:
+// Reads/writes template definitions under templates/<occasionType>/ IN THE
+// GITHUB REPO (not local disk) — templates can now be uploaded at runtime
+// (as a zip, see routes/templates.js), so they have to be visible
+// immediately, the same way customer data is. A template folder holds:
 //   - index.html    the master site (config-driven, see TEMPLATE_AUTHORING.md)
 //   - template.json the admin form schema + default config
 //   - assets/       default images/video shipped with the template
 
-const fs = require('fs');
-const path = require('path');
+const gh = require('./github');
 
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', 'templates');
+const TEMPLATES_PREFIX = 'templates';
 
-function listTemplates() {
-  if (!fs.existsSync(TEMPLATES_DIR)) return [];
-  return fs
-    .readdirSync(TEMPLATES_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name)
-    .filter((id) => fs.existsSync(path.join(TEMPLATES_DIR, id, 'template.json')))
-    .map((id) => getTemplate(id));
+async function listTemplates() {
+  const tree = await gh.getTree();
+  const ids = [...new Set(
+    tree
+      .filter((e) => e.path.startsWith(`${TEMPLATES_PREFIX}/`) && e.path.endsWith('/template.json'))
+      .map((e) => e.path.split('/')[1])
+  )];
+  const templates = await Promise.all(ids.map((id) => getTemplate(id)));
+  return templates.filter(Boolean);
 }
 
-function getTemplate(id) {
-  const dir = path.join(TEMPLATES_DIR, id);
-  const schemaPath = path.join(dir, 'template.json');
-  if (!fs.existsSync(schemaPath)) return null;
-  const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+async function getTemplate(id) {
+  const dir = `${TEMPLATES_PREFIX}/${id}`;
+  const file = await gh.getFile(`${dir}/template.json`);
+  if (!file) return null;
+  const schema = JSON.parse(file.content);
   return { id, dir, schema };
 }
 
-function getTemplateHtml(id) {
-  const t = getTemplate(id);
+async function getTemplateHtml(id) {
+  const t = await getTemplate(id);
   if (!t) return null;
-  return fs.readFileSync(path.join(t.dir, t.schema.templateFile || 'index.html'), 'utf8');
+  const file = await gh.getFile(`${t.dir}/${t.schema.templateFile || 'index.html'}`);
+  return file ? file.content : null;
 }
 
 // dot-path helpers -----------------------------------------------------
@@ -50,21 +53,4 @@ function setPath(obj, dotPath, value) {
   cur[keys[keys.length - 1]] = value;
 }
 
-// Deep-merge customer overrides onto the template's default config, so a
-// customer record only needs to store the fields it actually changed.
-function mergeConfig(defaultConfig, overrides) {
-  const out = structuredClone(defaultConfig || {});
-  if (!overrides) return out;
-  for (const [key, val] of Object.entries(overrides)) {
-    if (Array.isArray(val)) {
-      out[key] = structuredClone(val);
-    } else if (val && typeof val === 'object') {
-      out[key] = mergeConfig(out[key] || {}, val);
-    } else {
-      out[key] = val;
-    }
-  }
-  return out;
-}
-
-module.exports = { listTemplates, getTemplate, getTemplateHtml, getPath, setPath, mergeConfig, TEMPLATES_DIR };
+module.exports = { listTemplates, getTemplate, getTemplateHtml, getPath, setPath, TEMPLATES_PREFIX };

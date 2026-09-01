@@ -4,58 +4,66 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edit Customer — Occasion Sites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">Occasion Sites</div>
-  <nav>
-    <a href="/index.html">Customers</a>
-    <a href="/settings.html">Business Settings</a>
-  </nav>
-</header>
-<main>
-  <a class="link" href="/index.html">&larr; All customers</a>
-  <div class="row between" style="margin-top:8px;">
-    <h1 id="pageTitle">Loading…</h1>
-    <span class="badge" id="statusBadge"></span>
-  </div>
-  <div class="sub" id="pageSub"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Occasion Sites</div>
+    <nav>
+      <a href="/index.html" class="active"><span class="icon">👥</span> Customers</a>
+      <a href="/templates.html"><span class="icon">🗂</span> Templates</a>
+      <a href="/settings.html"><span class="icon">⚙</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="sidebar-foot">Occasion Sites Admin</div>
+  </aside>
+  <main>
+    <a class="link" href="/index.html">&larr; All customers</a>
+    <div class="row between" style="margin-top:8px;">
+      <h1 id="pageTitle">Loading…</h1>
+      <span class="badge" id="statusBadge"></span>
+    </div>
+    <div class="sub" id="pageSub"></div>
 
-  <div class="card">
-    <div class="grid-2">
-      <div>
-        <label>Customer / couple name</label>
-        <input id="cName" type="text">
+    <div class="card">
+      <div class="grid-2">
+        <div>
+          <label>Customer / couple name</label>
+          <input id="cName" type="text">
+        </div>
+        <div>
+          <label>Occasion date</label>
+          <input id="cDate" type="date">
+        </div>
+        <div>
+          <label>Email</label>
+          <input id="cEmail" type="email">
+        </div>
+        <div>
+          <label>Phone</label>
+          <input id="cPhone" type="tel">
+        </div>
       </div>
-      <div>
-        <label>Occasion date</label>
-        <input id="cDate" type="date">
-      </div>
-      <div>
-        <label>Email</label>
-        <input id="cEmail" type="email">
-      </div>
-      <div>
-        <label>Phone</label>
-        <input id="cPhone" type="tel">
+      <div class="row" style="margin-top:16px;">
+        <button class="btn secondary" id="saveContactBtn">Save contact info</button>
       </div>
     </div>
-    <div class="row" style="margin-top:16px;">
-      <button class="btn secondary" id="saveContactBtn">Save contact info</button>
+
+    <div id="formSections"></div>
+
+    <div class="row" style="margin-top:20px; position:sticky; bottom:16px;">
+      <button class="btn accent" id="saveBtn">Save changes</button>
+      <button class="btn secondary" id="previewBtn">Preview site</button>
+      <button class="btn" id="publishBtn">Publish live</button>
+      <a class="btn secondary" id="invoiceLink" href="#">Invoices</a>
     </div>
-  </div>
-
-  <div id="formSections"></div>
-
-  <div class="row" style="margin-top:20px; position:sticky; bottom:16px;">
-    <button class="btn accent" id="saveBtn">Save changes</button>
-    <button class="btn secondary" id="previewBtn">Preview site</button>
-    <button class="btn" id="publishBtn">Publish live</button>
-    <a class="btn secondary" id="invoiceLink" href="#">Invoices</a>
-  </div>
-  <div class="sub" id="publishResult" style="margin-top:10px;"></div>
-</main>
+    <div class="sub" id="publishResult" style="margin-top:10px;"></div>
+  </main>
+</div>
 <script src="/app.js"></script>
 <script>
 const customerId = qs('id');

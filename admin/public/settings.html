@@ -4,35 +4,43 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Business Settings — Occasion Sites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">Occasion Sites</div>
-  <nav>
-    <a href="/index.html">Customers</a>
-    <a href="/settings.html">Business Settings</a>
-  </nav>
-</header>
-<main>
-  <h1>Business Settings</h1>
-  <div class="sub">Shown on the letterhead of every invoice.</div>
-  <div class="card">
-    <label>Business name</label>
-    <input id="businessName" type="text">
-    <label>Address</label>
-    <textarea id="address"></textarea>
-    <label>Email</label>
-    <input id="email" type="email">
-    <label>Phone</label>
-    <input id="phone" type="tel">
-    <label>Payment details (bank/UPI info shown in invoice notes by default)</label>
-    <textarea id="paymentDetails"></textarea>
-    <div class="row" style="margin-top:16px;">
-      <button class="btn accent" id="saveBtn">Save</button>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Occasion Sites</div>
+    <nav>
+      <a href="/index.html"><span class="icon">👥</span> Customers</a>
+      <a href="/templates.html"><span class="icon">🗂</span> Templates</a>
+      <a href="/settings.html" class="active"><span class="icon">⚙</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="sidebar-foot">Occasion Sites Admin</div>
+  </aside>
+  <main>
+    <h1>Business Settings</h1>
+    <div class="sub">Shown on the letterhead of every invoice.</div>
+    <div class="card">
+      <label>Business name</label>
+      <input id="businessName" type="text">
+      <label>Address</label>
+      <textarea id="address"></textarea>
+      <label>Email</label>
+      <input id="email" type="email">
+      <label>Phone</label>
+      <input id="phone" type="tel">
+      <label>Payment details (bank/UPI info shown in invoice notes by default)</label>
+      <textarea id="paymentDetails"></textarea>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn accent" id="saveBtn">Save</button>
+      </div>
     </div>
-  </div>
-</main>
+  </main>
+</div>
 <script src="/app.js"></script>
 <script>
 async function load() {

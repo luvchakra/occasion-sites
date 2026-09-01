@@ -68,16 +68,15 @@ app.get('/preview/:id', ah(async (req, res) => {
   const db = await withDb((d) => d);
   const customer = db.customers.find((c) => c.id === req.params.id);
   if (!customer) return res.status(404).send('Customer not found');
-  const template = getTemplate(customer.templateId);
+  const template = await getTemplate(customer.templateId);
   if (!template) return res.status(404).send('Template not found');
-  const html = renderSite(getTemplateHtml(customer.templateId), template.schema, customer.config);
+  const html = renderSite(await getTemplateHtml(customer.templateId), template.schema, customer.config);
   const withBase = html.replace('<head>', `<head>\n<base href="/preview-assets/${customer.id}/">`);
   res.send(withBase);
 }));
 
-// Serves the images/videos a preview needs: this customer's uploads (from
-// the repo) first, falling back to the template's own default/backdrop
-// assets (read straight off disk — bundled with this deployment).
+// Serves the images/videos a customer preview needs: this customer's
+// uploads first, falling back to the template's own default/backdrop assets.
 app.get('/preview-assets/:customerId/:type/:filename', ah(async (req, res) => {
   const db = await withDb((d) => d);
   const customer = db.customers.find((c) => c.id === req.params.customerId);
@@ -94,10 +93,42 @@ app.get('/preview-assets/:customerId/:type/:filename', ah(async (req, res) => {
       if (err.status !== 404) throw err;
     }
   }
-  const template = getTemplate(customer.templateId);
-  const fallback = path.join(template.dir, 'assets', type, filename);
-  if (fs.existsSync(fallback)) return res.sendFile(fallback);
-  res.status(404).end();
+  const template = await getTemplate(customer.templateId);
+  if (!template) return res.status(404).end();
+  try {
+    const buf = await gh.getFileBuffer(`${template.dir}/assets/${type}/${filename}`);
+    res.set('Content-Type', contentType);
+    res.send(buf);
+  } catch (err) {
+    if (err.status !== 404) throw err;
+    res.status(404).end();
+  }
+}));
+
+// Renders a template on its OWN default content — no customer involved.
+// Lets you preview a template right after uploading it, or compare
+// templates before picking one for a new customer.
+app.get('/preview-template/:id', ah(async (req, res) => {
+  const template = await getTemplate(req.params.id);
+  if (!template) return res.status(404).send('Template not found');
+  const html = renderSite(await getTemplateHtml(req.params.id), template.schema, template.schema.defaultConfig);
+  const withBase = html.replace('<head>', `<head>\n<base href="/preview-template-assets/${template.id}/">`);
+  res.send(withBase);
+}));
+
+app.get('/preview-template-assets/:templateId/:type/:filename', ah(async (req, res) => {
+  const { templateId, type, filename } = req.params;
+  const contentType = MIME_TYPES[path.extname(filename).toLowerCase()] || 'application/octet-stream';
+  const template = await getTemplate(templateId);
+  if (!template) return res.status(404).end();
+  try {
+    const buf = await gh.getFileBuffer(`${template.dir}/assets/${type}/${filename}`);
+    res.set('Content-Type', contentType);
+    res.send(buf);
+  } catch (err) {
+    if (err.status !== 404) throw err;
+    res.status(404).end();
+  }
 }));
 
 // Vercel imports this file as a serverless function (see api/index.js) and

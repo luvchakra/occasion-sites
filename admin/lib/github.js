@@ -1,9 +1,7 @@
 // Thin wrapper around the GitHub REST + Git Data APIs. On Vercel there is
-// no persistent local disk and no local `git` — so anything that needs to
-// PERSIST (customer/invoice data, uploaded photos, published sites) goes
-// through here instead. Templates, by contrast, are read straight off disk
-// (see templates.js) because they ship as part of the deployment and never
-// change at runtime.
+// no persistent local disk and no local `git` — so everything that must
+// PERSIST or be visible immediately after a write (customer/invoice data,
+// uploaded photos, templates, published sites) goes through here.
 
 const OWNER = process.env.GITHUB_OWNER;
 const REPO = process.env.GITHUB_REPO;
@@ -99,6 +97,17 @@ async function deleteDir(dirPath, message) {
   }
 }
 
+// Full recursive listing of every blob in the repo at the current branch
+// HEAD — [{path, sha, type}]. One call, cheap enough for a repo this size;
+// used to find template files/assets by path prefix without a request per
+// subfolder.
+async function getTree() {
+  const ref = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
+  const commit = await gh(`/repos/${OWNER}/${REPO}/git/commits/${ref.object.sha}`);
+  const tree = await gh(`/repos/${OWNER}/${REPO}/git/trees/${commit.tree.sha}?recursive=1`);
+  return tree.tree;
+}
+
 // Commits multiple files in ONE atomic commit via the Git Data API. Each
 // entry is either { path, sha } to reuse an existing blob already in the
 // repo (cheap — no re-upload), or { path, content: Buffer } to upload new
@@ -139,4 +148,4 @@ async function commitFiles(files, message) {
   return newCommit.sha;
 }
 
-module.exports = { getFile, getFileBuffer, listDir, putFile, deleteFile, deleteDir, commitFiles, OWNER, REPO, BRANCH };
+module.exports = { getFile, getFileBuffer, listDir, putFile, deleteFile, deleteDir, getTree, commitFiles, OWNER, REPO, BRANCH };

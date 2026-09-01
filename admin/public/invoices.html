@@ -4,53 +4,61 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Invoices — Occasion Sites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">Occasion Sites</div>
-  <nav>
-    <a href="/index.html">Customers</a>
-    <a href="/settings.html">Business Settings</a>
-  </nav>
-</header>
-<main>
-  <a class="link" href="#" id="backLink">&larr; Back to customer</a>
-  <h1 id="pageTitle">Invoices</h1>
-  <div class="sub" id="pageSub"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Occasion Sites</div>
+    <nav>
+      <a href="/index.html" class="active"><span class="icon">👥</span> Customers</a>
+      <a href="/templates.html"><span class="icon">🗂</span> Templates</a>
+      <a href="/settings.html"><span class="icon">⚙</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="sidebar-foot">Occasion Sites Admin</div>
+  </aside>
+  <main>
+    <a class="link" href="#" id="backLink">&larr; Back to customer</a>
+    <h1 id="pageTitle">Invoices</h1>
+    <div class="sub" id="pageSub"></div>
 
-  <div class="card">
-    <strong>New invoice</strong>
-    <div class="grid-2">
-      <div>
-        <label>Issue date</label>
-        <input id="issueDate" type="date">
+    <div class="card">
+      <strong>New invoice</strong>
+      <div class="grid-2">
+        <div>
+          <label>Issue date</label>
+          <input id="issueDate" type="date">
+        </div>
+        <div>
+          <label>Due date</label>
+          <input id="dueDate" type="date">
+        </div>
       </div>
-      <div>
-        <label>Due date</label>
-        <input id="dueDate" type="date">
+      <label>Line items</label>
+      <div id="itemsWrap"></div>
+      <button class="btn small secondary" id="addItemBtn" type="button" style="margin-top:8px;">+ Add line item</button>
+      <label>Notes (payment details, terms, thank-you note…)</label>
+      <textarea id="notes"></textarea>
+      <div class="row between" style="margin-top:16px;">
+        <strong>Total: <span id="newTotal">0.00</span></strong>
+        <button class="btn accent" id="createInvoiceBtn">Create invoice</button>
       </div>
     </div>
-    <label>Line items</label>
-    <div id="itemsWrap"></div>
-    <button class="btn small secondary" id="addItemBtn" type="button" style="margin-top:8px;">+ Add line item</button>
-    <label>Notes (payment details, terms, thank-you note…)</label>
-    <textarea id="notes"></textarea>
-    <div class="row between" style="margin-top:16px;">
-      <strong>Total: <span id="newTotal">0.00</span></strong>
-      <button class="btn accent" id="createInvoiceBtn">Create invoice</button>
-    </div>
-  </div>
 
-  <h2>All invoices for this customer</h2>
-  <div class="card">
-    <table>
-      <thead><tr><th>#</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
-      <tbody id="invoiceRows"></tbody>
-    </table>
-    <div class="empty" id="emptyState" hidden>No invoices yet.</div>
-  </div>
-</main>
+    <h2>All invoices for this customer</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>#</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
+        <tbody id="invoiceRows"></tbody>
+      </table>
+      <div class="empty" id="emptyState" hidden>No invoices yet.</div>
+    </div>
+  </main>
+</div>
 <script src="/app.js"></script>
 <script>
 const customerId = qs('customerId');

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Templates — Occasion Sites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Occasion Sites</div>
+    <nav>
+      <a href="/index.html"><span class="icon">👥</span> Customers</a>
+      <a href="/templates.html" class="active"><span class="icon">🗂</span> Templates</a>
+      <a href="/settings.html"><span class="icon">⚙</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="sidebar-foot">Occasion Sites Admin</div>
+  </aside>
+  <main>
+    <h1>Templates</h1>
+    <div class="sub">One per occasion type. Build the site itself outside this tool, then upload it as a zip — no template builder needed.</div>
+
+    <div class="card">
+      <strong>Upload a new template</strong>
+      <div class="grid-2">
+        <div>
+          <label>Label</label>
+          <input id="newLabel" type="text" placeholder="e.g. Birthday">
+        </div>
+        <div>
+          <label>Occasion type (id)</label>
+          <input id="newOccasionType" type="text" placeholder="auto-generated from label if left blank">
+        </div>
+      </div>
+      <label>Description (shown when picking a template)</label>
+      <input id="newDescription" type="text" placeholder="One line describing this template">
+      <label>Zip file (index.html at the root, plus images/videos)</label>
+      <input id="newZip" type="file" accept=".zip">
+      <div class="field-hint">See <a class="link" href="https://github.com/luvchakra/occasion-sites/blob/main/TEMPLATE_AUTHORING.md" target="_blank">TEMPLATE_AUTHORING.md</a> for the required convention.</div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn accent" id="uploadBtn">Upload template</button>
+      </div>
+      <div id="uploadResult"></div>
+    </div>
+
+    <h2>All templates</h2>
+    <div class="template-grid" id="templateGrid"></div>
+    <div class="empty" id="emptyState" hidden>No templates yet — upload one above.</div>
+  </main>
+</div>
+<script src="/app.js"></script>
+<script>
+async function load() {
+  const templates = await api('GET', '/api/templates');
+  const grid = document.getElementById('templateGrid');
+  grid.innerHTML = '';
+  document.getElementById('emptyState').hidden = templates.length > 0;
+  templates.forEach((t) => {
+    grid.appendChild(el('div', { class: 'template-card' }, [
+      el('h3', {}, t.label),
+      el('p', {}, t.description || ''),
+      el('div', { class: 'row' }, [
+        el('a', { class: 'btn small secondary', href: `/preview-template/${t.id}`, target: '_blank' }, 'Preview'),
+        el('span', { class: 'field-hint', style: 'margin:0;' }, t.occasionType)
+      ])
+    ]));
+  });
+}
+
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+  const label = document.getElementById('newLabel').value.trim();
+  const occasionType = document.getElementById('newOccasionType').value.trim();
+  const description = document.getElementById('newDescription').value.trim();
+  const file = document.getElementById('newZip').files[0];
+  if (!label) return toast('Enter a label first', true);
+  if (!file) return toast('Choose a zip file first', true);
+
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  const resultBox = document.getElementById('uploadResult');
+  resultBox.innerHTML = '';
+  try {
+    const form = new FormData();
+    form.append('label', label);
+    if (occasionType) form.append('occasionType', occasionType);
+    form.append('description', description);
+    form.append('zipfile', file);
+    const res = await fetch('/api/templates', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+    toast(`Template "${data.schema.label}" added`);
+    if (data.warnings && data.warnings.length) {
+      resultBox.appendChild(el('div', { class: 'warning-box' }, [
+        el('strong', {}, `Added, but ${data.warnings.length} field(s) were skipped:`),
+        el('ul', { style: 'margin:6px 0 0; padding-left:18px;' }, data.warnings.map((w) => el('li', {}, w)))
+      ]));
+    }
+    document.getElementById('newLabel').value = '';
+    document.getElementById('newOccasionType').value = '';
+    document.getElementById('newDescription').value = '';
+    document.getElementById('newZip').value = '';
+    load();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload template';
+  }
+});
+
+load().catch(err => toast(err.message, true));
+</script>
+</body>
+</html>

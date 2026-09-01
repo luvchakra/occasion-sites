@@ -4,9 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Invoice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 <style>
   main { max-width: 720px; }
+  .print-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 40px; border-bottom: 1px solid var(--line); background: #fff;
+  }
+  .print-nav .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; }
+  .print-nav .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
   .letterhead { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 28px; }
   .letterhead h1 { margin:0; }
   .bill-to { color: var(--ink-soft); font-size:.92rem; margin-top:4px; white-space:pre-line; }
@@ -19,13 +28,10 @@
 </style>
 </head>
 <body>
-<header class="topbar no-print">
-  <div class="brand">Occasion Sites</div>
-  <nav>
-    <a href="/index.html">Customers</a>
-    <a href="/settings.html">Business Settings</a>
-  </nav>
-</header>
+<div class="print-nav no-print">
+  <div class="brand"><span class="dot"></span> Occasion Sites</div>
+  <a class="link" href="/index.html">&larr; Back to Customers</a>
+</div>
 <main>
   <div class="row between no-print" style="margin-bottom:16px;">
     <span class="badge" id="statusBadge"></span>

@@ -40,7 +40,7 @@ router.get('/:id', ah(async (req, res) => {
 router.post('/', ah(async (req, res) => {
   const { name, email, phone, templateId, occasionDate, slug } = req.body;
   if (!name || !templateId) return res.status(400).json({ error: 'name and templateId are required' });
-  const template = getTemplate(templateId);
+  const template = await getTemplate(templateId);
   if (!template) return res.status(400).json({ error: `Unknown template: ${templateId}` });
 
   const customer = await withDb((db) => {
