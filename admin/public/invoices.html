@@ -51,10 +51,12 @@
 
     <h2>All invoices for this customer</h2>
     <div class="card">
-      <table>
-        <thead><tr><th>#</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
-        <tbody id="invoiceRows"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
+          <tbody id="invoiceRows"></tbody>
+        </table>
+      </div>
       <div class="empty" id="emptyState" hidden>No invoices yet.</div>
     </div>
   </main>

@@ -1,4 +1,7 @@
 :root {
+  /* Stops phones/browsers with a forced-dark web mode from auto-inverting
+     this page's colors — we have a real light theme, not an absent one. */
+  color-scheme: light;
   --ink: #17181c;
   --ink-soft: #6b6f7a;
   --ink-faint: #9497a1;
@@ -100,6 +103,11 @@ h2 { font-size: 1.08rem; margin: 30px 0 12px; font-weight: 650; }
   margin-bottom: 18px;
 }
 
+/* Wrap tables in <div class="table-wrap"> so they scroll horizontally on
+   narrow screens instead of forcing the whole page wider. */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap table { min-width: 480px; }
+
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .row.between { justify-content: space-between; }
 
@@ -179,17 +187,26 @@ a.link:hover { text-decoration: underline; }
 
 @media (max-width: 860px) {
   .grid-2 { grid-template-columns: 1fr; }
-  .sidebar { position: static; width: auto; flex-direction: row; align-items: center; padding: 14px 16px; }
-  .sidebar .brand { padding: 0 12px 0 0; }
-  .sidebar nav { flex-direction: row; overflow-x: auto; }
+  .sidebar {
+    position: static; width: auto; flex-shrink: 1;
+    flex-direction: row; align-items: center;
+    padding: 12px 14px; overflow-x: auto;
+  }
+  .sidebar .brand { padding: 0 12px 0 0; white-space: nowrap; }
+  .sidebar nav { flex-direction: row; }
+  .sidebar nav a { white-space: nowrap; }
   .sidebar .spacer, .sidebar .sidebar-foot { display: none; }
   .app-shell { flex-direction: column; }
-  main { margin-left: 0; padding: 26px 18px 60px; }
+  .app-shell main { margin-left: 0; max-width: 100%; padding: 22px 16px 60px; }
+
+  h1 { font-size: 1.32rem; }
+  .card { padding: 16px; }
+  th, td { padding: 9px 6px; font-size: 0.85rem; }
 }
 
 @media print {
   .sidebar, .no-print { display: none !important; }
   body { background: #fff; }
   .app-shell { display: block; }
-  main { padding: 0; max-width: 100%; margin-left: 0; }
+  .app-shell main, main { padding: 0; max-width: 100%; margin-left: 0; }
 }
