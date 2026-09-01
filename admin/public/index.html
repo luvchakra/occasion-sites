@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Occasion Sites — Admin</title>
+<title>Dashboard — Occasion Sites</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
@@ -19,7 +19,8 @@
   <aside class="sidebar">
     <div class="brand"><span class="dot"></span> Occasion Sites</div>
     <nav>
-      <a href="/index.html" class="active"><span class="icon">👥</span> Customers</a>
+      <a href="/index.html" class="active"><span class="icon">📊</span> Dashboard</a>
+      <a href="/customers.html"><span class="icon">👥</span> Customers</a>
       <a href="/templates.html"><span class="icon">🗂</span> Templates</a>
       <a href="/settings.html"><span class="icon">⚙</span> Settings</a>
     </nav>
@@ -27,84 +28,158 @@
     <div class="sidebar-foot">Occasion Sites Admin</div>
   </aside>
   <main>
-    <h1>Customers</h1>
-    <div class="sub">Each customer can place any number of orders — one order is one website (a wedding site, a birthday site, …).</div>
+    <h1>Dashboard</h1>
+    <div class="sub">Where things stand across every customer and order.</div>
 
-    <div class="card">
-      <div class="row between">
-        <strong>New customer</strong>
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="stat-value" id="statCustomers">—</div>
+        <div class="stat-label">Customers</div>
       </div>
-      <div class="grid-2">
-        <div>
-          <label>Customer name</label>
-          <input id="newName" type="text" placeholder="e.g. Kabir & Ananya">
-        </div>
-        <div>
-          <label>Email (optional)</label>
-          <input id="newEmail" type="email">
-        </div>
-        <div>
-          <label>Phone (optional)</label>
-          <input id="newPhone" type="tel">
-        </div>
+      <div class="stat-tile">
+        <div class="stat-value" id="statOrders">—</div>
+        <div class="stat-label">Orders total</div>
       </div>
-      <div class="row" style="margin-top:16px;">
-        <button class="btn accent" id="createBtn">Create customer</button>
+      <div class="stat-tile ok">
+        <div class="stat-value" id="statPublished">—</div>
+        <div class="stat-label">Sites live</div>
+      </div>
+      <div class="stat-tile warn">
+        <div class="stat-value" id="statDraft">—</div>
+        <div class="stat-label">Orders in draft</div>
+      </div>
+      <div class="stat-tile ok">
+        <div class="stat-value" id="statRevenue">—</div>
+        <div class="stat-label">Collected (paid invoices)</div>
+      </div>
+      <div class="stat-tile warn">
+        <div class="stat-value" id="statOutstanding">—</div>
+        <div class="stat-label">Outstanding (unpaid)</div>
       </div>
     </div>
 
-    <h2>All customers</h2>
-    <div class="card" id="listCard">
+    <div class="grid-2" style="align-items:start;">
+      <div>
+        <h2>Orders by occasion</h2>
+        <div class="card">
+          <div class="bar-list" id="occasionBars"></div>
+          <div class="empty" id="occasionEmpty" hidden>No orders yet.</div>
+        </div>
+      </div>
+      <div>
+        <h2>Needs attention</h2>
+        <div class="card">
+          <div id="attentionList"></div>
+          <div class="empty" id="attentionEmpty" hidden>Nothing overdue or unpaid right now.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Recent orders</h2>
+    <div class="card">
       <div class="table-wrap">
-        <table id="customerTable" class="responsive-table">
-          <thead>
-            <tr><th>Name</th><th>Contact</th><th>Orders</th><th>Updated</th><th></th></tr>
-          </thead>
-          <tbody id="customerRows"></tbody>
+        <table class="responsive-table">
+          <thead><tr><th>Order #</th><th>Title</th><th>Customer</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+          <tbody id="recentOrderRows"></tbody>
         </table>
       </div>
-      <div class="empty" id="emptyState" hidden>No customers yet — create your first one above.</div>
+      <div class="empty" id="ordersEmpty" hidden>No orders yet — <a class="link" href="/customers.html">create a customer</a> to get started.</div>
     </div>
   </main>
 </div>
 <script src="/app.js"></script>
 <script>
-async function loadCustomers() {
-  const customers = await api('GET', '/api/customers');
-  const rows = document.getElementById('customerRows');
-  const empty = document.getElementById('emptyState');
-  rows.innerHTML = '';
-  empty.hidden = customers.length > 0;
-  customers
-    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
-    .forEach(c => {
-      const tr = el('tr', {}, [
-        el('td', { 'data-label': 'Name' }, el('a', { class: 'link', href: `/customer.html?id=${c.id}` }, c.name)),
-        el('td', { 'data-label': 'Contact' }, [c.email, c.phone].filter(Boolean).join(' · ')),
-        el('td', { 'data-label': 'Orders' }, String(c.orderCount)),
-        el('td', { 'data-label': 'Updated' }, c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''),
-        el('td', { class: 'actions' }, [
-          el('a', { class: 'btn small secondary', href: `/customer.html?id=${c.id}` }, 'Open')
-        ])
-      ]);
-      rows.appendChild(tr);
-    });
+function fmtMoney(n) {
+  return money(n);
 }
 
-document.getElementById('createBtn').addEventListener('click', async () => {
-  const name = document.getElementById('newName').value.trim();
-  const email = document.getElementById('newEmail').value.trim();
-  const phone = document.getElementById('newPhone').value.trim();
-  if (!name) return toast('Enter a customer name first', true);
-  try {
-    const customer = await api('POST', '/api/customers', { name, email, phone });
-    location.href = `/customer.html?id=${customer.id}`;
-  } catch (err) {
-    toast(err.message, true);
-  }
-});
+async function load() {
+  const [customers, orders, invoices, occasions] = await Promise.all([
+    api('GET', '/api/customers'),
+    api('GET', '/api/orders'),
+    api('GET', '/api/invoices'),
+    api('GET', '/api/occasions')
+  ]);
 
-loadCustomers().catch(err => toast(err.message, true));
+  const customerById = new Map(customers.map((c) => [c.id, c]));
+  const orderById = new Map(orders.map((o) => [o.id, o]));
+  const occasionLabel = (code) => (occasions.find((o) => o.code === code) || {}).label || code;
+
+  // ---- Stat tiles ----
+  const published = orders.filter((o) => o.status === 'published').length;
+  const draft = orders.filter((o) => o.status === 'draft').length;
+  const paid = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.total, 0);
+  const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.total, 0);
+
+  document.getElementById('statCustomers').textContent = customers.length;
+  document.getElementById('statOrders').textContent = orders.length;
+  document.getElementById('statPublished').textContent = published;
+  document.getElementById('statDraft').textContent = draft;
+  document.getElementById('statRevenue').textContent = fmtMoney(paid);
+  document.getElementById('statOutstanding').textContent = fmtMoney(outstanding);
+
+  // ---- Orders by occasion (single-series bar list, sorted by count) ----
+  const counts = new Map();
+  orders.forEach((o) => counts.set(o.occasionType, (counts.get(o.occasionType) || 0) + 1));
+  const maxCount = Math.max(1, ...counts.values());
+  const barsWrap = document.getElementById('occasionBars');
+  barsWrap.innerHTML = '';
+  document.getElementById('occasionEmpty').hidden = counts.size > 0;
+  [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([code, count]) => {
+      barsWrap.appendChild(el('div', { class: 'bar-row' }, [
+        el('div', { class: 'bar-label' }, occasionLabel(code)),
+        el('div', { class: 'bar-track' }, el('div', { class: 'bar-fill', style: `width:${(count / maxCount) * 100}%;` })),
+        el('div', { class: 'bar-count' }, String(count))
+      ]));
+    });
+
+  // ---- Needs attention: unpaid invoices, overdue ones first ----
+  const today = new Date().toISOString().slice(0, 10);
+  const unpaid = invoices
+    .filter((i) => i.status !== 'paid')
+    .map((i) => ({ ...i, overdue: i.dueDate && i.dueDate < today }))
+    .sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999'))
+    .slice(0, 6);
+
+  const attentionWrap = document.getElementById('attentionList');
+  attentionWrap.innerHTML = '';
+  document.getElementById('attentionEmpty').hidden = unpaid.length > 0;
+  unpaid.forEach((inv) => {
+    const order = orderById.get(inv.orderId);
+    const customer = order ? customerById.get(order.customerId) : null;
+    attentionWrap.appendChild(el('div', { class: 'row between', style: 'padding:8px 0; border-bottom:1px solid var(--line);' }, [
+      el('div', {}, [
+        el('a', { class: 'link', href: order ? `/invoices.html?orderId=${order.id}` : '#' }, order ? order.title : 'Unknown order'),
+        el('div', { class: 'field-hint' }, [
+          customer ? customer.name : '',
+          inv.dueDate ? (inv.overdue ? `overdue since ${inv.dueDate}` : `due ${inv.dueDate}`) : 'no due date'
+        ].filter(Boolean).join(' · '))
+      ]),
+      el('div', { class: inv.overdue ? 'overdue' : '' }, fmtMoney(inv.total))
+    ]));
+  });
+
+  // ---- Recent orders ----
+  const rows = document.getElementById('recentOrderRows');
+  rows.innerHTML = '';
+  const recent = orders.slice().sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')).slice(0, 8);
+  document.getElementById('ordersEmpty').hidden = orders.length > 0;
+  recent.forEach((o) => {
+    const customer = customerById.get(o.customerId);
+    rows.appendChild(el('tr', {}, [
+      el('td', { 'data-label': 'Order #' }, o.orderNumber),
+      el('td', { 'data-label': 'Title' }, el('a', { class: 'link', href: `/order.html?id=${o.id}` }, o.title)),
+      el('td', { 'data-label': 'Customer' }, customer ? customer.name : '—'),
+      el('td', { 'data-label': 'Status' }, el('span', { class: `badge ${o.status}` }, o.status)),
+      el('td', { 'data-label': 'Updated' }, o.updatedAt ? new Date(o.updatedAt).toLocaleString() : ''),
+      el('td', { class: 'actions' }, el('a', { class: 'btn small secondary', href: `/order.html?id=${o.id}` }, 'Open'))
+    ]));
+  });
+}
+
+load().catch(err => toast(err.message, true));
 </script>
 </body>
 </html>

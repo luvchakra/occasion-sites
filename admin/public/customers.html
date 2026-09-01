@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customers — Occasion Sites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="mobile-topbar">
+  <button class="menu-toggle" aria-label="Open menu">☰</button>
+  <div class="brand"><span class="dot"></span> Occasion Sites</div>
+</div>
+<div class="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Occasion Sites</div>
+    <nav>
+      <a href="/index.html"><span class="icon">📊</span> Dashboard</a>
+      <a href="/customers.html" class="active"><span class="icon">👥</span> Customers</a>
+      <a href="/templates.html"><span class="icon">🗂</span> Templates</a>
+      <a href="/settings.html"><span class="icon">⚙</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="sidebar-foot">Occasion Sites Admin</div>
+  </aside>
+  <main>
+    <h1>Customers</h1>
+    <div class="sub">Each customer can place any number of orders — one order is one website (a wedding site, a birthday site, …).</div>
+
+    <div class="card">
+      <div class="row between">
+        <strong>New customer</strong>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label>Customer name</label>
+          <input id="newName" type="text" placeholder="e.g. Kabir & Ananya">
+        </div>
+        <div>
+          <label>Email (optional)</label>
+          <input id="newEmail" type="email">
+        </div>
+        <div>
+          <label>Phone (optional)</label>
+          <input id="newPhone" type="tel">
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn accent" id="createBtn">Create customer</button>
+      </div>
+    </div>
+
+    <h2>All customers</h2>
+    <div class="card" id="listCard">
+      <div class="table-wrap">
+        <table id="customerTable" class="responsive-table">
+          <thead>
+            <tr><th>Name</th><th>Contact</th><th>Orders</th><th>Updated</th><th></th></tr>
+          </thead>
+          <tbody id="customerRows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" hidden>No customers yet — create your first one above.</div>
+    </div>
+  </main>
+</div>
+<script src="/app.js"></script>
+<script>
+async function loadCustomers() {
+  const customers = await api('GET', '/api/customers');
+  const rows = document.getElementById('customerRows');
+  const empty = document.getElementById('emptyState');
+  rows.innerHTML = '';
+  empty.hidden = customers.length > 0;
+  customers
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .forEach(c => {
+      const tr = el('tr', {}, [
+        el('td', { 'data-label': 'Name' }, el('a', { class: 'link', href: `/customer.html?id=${c.id}` }, c.name)),
+        el('td', { 'data-label': 'Contact' }, [c.email, c.phone].filter(Boolean).join(' · ')),
+        el('td', { 'data-label': 'Orders' }, String(c.orderCount)),
+        el('td', { 'data-label': 'Updated' }, c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''),
+        el('td', { class: 'actions' }, [
+          el('a', { class: 'btn small secondary', href: `/customer.html?id=${c.id}` }, 'Open')
+        ])
+      ]);
+      rows.appendChild(tr);
+    });
+}
+
+document.getElementById('createBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newName').value.trim();
+  const email = document.getElementById('newEmail').value.trim();
+  const phone = document.getElementById('newPhone').value.trim();
+  if (!name) return toast('Enter a customer name first', true);
+  try {
+    const customer = await api('POST', '/api/customers', { name, email, phone });
+    location.href = `/customer.html?id=${customer.id}`;
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+loadCustomers().catch(err => toast(err.message, true));
+</script>
+</body>
+</html>

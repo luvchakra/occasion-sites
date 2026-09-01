@@ -58,10 +58,15 @@ settings. Every push to `main` redeploys it automatically.
 
 ## Using the tool
 
-Open the dashboard. From there:
+The **Dashboard** (landing page) shows key metrics at a glance: total customers,
+orders (live vs draft), revenue collected vs outstanding, orders broken down
+by occasion, a "needs attention" list of unpaid/overdue invoices, and recent
+orders.
+
+For the actual work, go to **Customers**:
 
 1. **New customer** — just a contact: name, email, phone. No occasion/template yet — that's chosen per order.
-2. **Open** the customer → **New order**: give it a title (e.g. "Kabir & Ananya's Wedding Site"), pick a template, optionally set the occasion date. You can **Preview** any template matching the occasion before committing. Creates the order with a system-generated order number (`ORD-0001`, …) and opens it.
+2. **Open** the customer → **New order**: give it a title (e.g. "Kabir & Ananya's Wedding Site"), pick an occasion then a matching template, optionally set the occasion date. You can **Preview** any template matching the occasion before committing. Creates the order with a system-generated order number (`ORD-0001`, …) and opens it.
 3. **On the order page** → fill in the form (names, dates, venues, events, RSVP info…) and upload photos directly in each photo field.
 4. **Publish live** — commits the rendered site into `sites/<slug>/` in this repo. It becomes live at `PUBLIC_BASE_URL/<slug>/` (GitHub Pages) within a minute or two.
 5. **Invoices** (from the order page) — add line items, mark draft/sent/paid, and use **View / Print** to get a clean printable invoice (browser's Print → Save as PDF works for emailing it).

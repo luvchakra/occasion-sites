@@ -187,6 +187,26 @@ a.link:hover { text-decoration: underline; }
 .template-card p { margin: 0 0 12px; color: var(--ink-soft); font-size: 0.85rem; min-height: 2.4em; }
 .action-bar { margin-top: 20px; position: sticky; bottom: 16px; }
 
+/* ---- Dashboard: stat tiles + single-series bar list ---- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.stat-tile {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 18px 20px;
+}
+.stat-tile .stat-value { font-size: 1.9rem; font-weight: 650; letter-spacing: -0.01em; line-height: 1.15; color: var(--ink); }
+.stat-tile .stat-label { font-size: 0.82rem; color: var(--ink-soft); margin-top: 4px; }
+.stat-tile.ok .stat-value { color: var(--ok); }
+.stat-tile.warn .stat-value { color: var(--warn); }
+
+.bar-list { margin-top: 4px; }
+.bar-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.bar-row .bar-label { width: 120px; flex-shrink: 0; font-size: 0.85rem; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-row .bar-track { flex: 1; background: var(--line); border-radius: 999px; height: 10px; min-width: 40px; overflow: hidden; }
+.bar-row .bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+.bar-row .bar-count { width: 30px; text-align: right; font-size: 0.85rem; font-weight: 650; color: var(--ink); flex-shrink: 0; }
+
+.overdue { color: var(--danger); font-weight: 650; }
+
 /* ---- Mobile top bar + off-canvas sidebar drawer ---- */
 .mobile-topbar {
   display: none;
