@@ -78,16 +78,16 @@
       "publishedPath": "",
       "config": {
         "couple": {
-          "brideName": "",
-          "groomName": "",
+          "brideName": "Aliya",
+          "groomName": "Ranbir",
           "mainPhoto": "",
-          "introText": ""
+          "introText": "Our awesome story"
         },
         "wedding": {
-          "heartDay": "",
-          "heartMonth": "",
-          "heartYear": "",
-          "time": "",
+          "heartDay": "22",
+          "heartMonth": "Mar",
+          "heartYear": "2027",
+          "time": "Mehndi",
           "displayDate": "",
           "location": "",
           "venueName": "",
@@ -122,7 +122,7 @@
         }
       },
       "createdAt": "2026-09-01T13:52:12.440Z",
-      "updatedAt": "2026-09-01T13:52:12.440Z"
+      "updatedAt": "2026-09-01T13:53:09.023Z"
     }
   ],
   "invoices": [
