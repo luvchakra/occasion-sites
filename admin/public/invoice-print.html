@@ -55,6 +55,10 @@
         <label style="margin-top:0;">Billed to</label>
         <div id="customerBlock"></div>
       </div>
+      <div>
+        <label style="margin-top:0;">For order</label>
+        <div id="orderBlock"></div>
+      </div>
     </div>
 
     <div class="table-wrap" style="margin-top:24px;">
@@ -96,6 +100,11 @@ async function load() {
   const c = invoice.customer;
   document.getElementById('customerBlock').innerHTML = c
     ? `<strong>${c.name}</strong><br>${[c.email, c.phone].filter(Boolean).join(' · ')}`
+    : '—';
+
+  const o = invoice.order;
+  document.getElementById('orderBlock').innerHTML = o
+    ? `<strong>${o.title}</strong><br>${o.orderNumber} · ${o.occasionType}`
     : '—';
 
   const rows = document.getElementById('itemRows');

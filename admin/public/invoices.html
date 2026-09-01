@@ -27,7 +27,7 @@
     <div class="sidebar-foot">Occasion Sites Admin</div>
   </aside>
   <main>
-    <a class="link" href="#" id="backLink">&larr; Back to customer</a>
+    <a class="link" href="#" id="backLink">&larr; Back to order</a>
     <h1 id="pageTitle">Invoices</h1>
     <div class="sub" id="pageSub"></div>
 
@@ -54,7 +54,7 @@
       </div>
     </div>
 
-    <h2>All invoices for this customer</h2>
+    <h2>All invoices for this order</h2>
     <div class="card">
       <div class="table-wrap">
         <table class="responsive-table">
@@ -68,7 +68,7 @@
 </div>
 <script src="/app.js"></script>
 <script>
-const customerId = qs('customerId');
+const orderId = qs('orderId');
 let items = [{ description: '', qty: 1, unitPrice: 0 }];
 
 function renderItems() {
@@ -101,7 +101,7 @@ document.getElementById('addItemBtn').addEventListener('click', () => {
 document.getElementById('createInvoiceBtn').addEventListener('click', async () => {
   try {
     await api('POST', '/api/invoices', {
-      customerId,
+      orderId,
       issueDate: document.getElementById('issueDate').value,
       dueDate: document.getElementById('dueDate').value,
       items,
@@ -117,11 +117,11 @@ document.getElementById('createInvoiceBtn').addEventListener('click', async () =
 });
 
 async function loadInvoices() {
-  const customer = await api('GET', `/api/customers/${customerId}`);
-  document.getElementById('pageTitle').textContent = `Invoices — ${customer.name}`;
-  document.getElementById('backLink').href = `/customer.html?id=${customerId}`;
+  const order = await api('GET', `/api/orders/${orderId}`);
+  document.getElementById('pageTitle').textContent = `Invoices — ${order.title}`;
+  document.getElementById('backLink').href = `/order.html?id=${orderId}`;
 
-  const invoices = await api('GET', `/api/invoices?customerId=${customerId}`);
+  const invoices = await api('GET', `/api/invoices?orderId=${orderId}`);
   const rows = document.getElementById('invoiceRows');
   rows.innerHTML = '';
   document.getElementById('emptyState').hidden = invoices.length > 0;

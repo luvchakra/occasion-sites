@@ -11,6 +11,7 @@ const { renderSite } = require('./lib/render');
 
 const templatesRouter = require('./routes/templates');
 const customersRouter = require('./routes/customers');
+const ordersRouter = require('./routes/orders');
 const invoicesRouter = require('./routes/invoices');
 
 const app = express();
@@ -42,6 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/templates', templatesRouter);
 app.use('/api/customers', customersRouter);
+app.use('/api/orders', ordersRouter);
 app.use('/api/invoices', invoicesRouter);
 
 const ah = (fn) => (req, res) => fn(req, res).catch((err) => {
@@ -62,26 +64,26 @@ app.put('/api/settings', ah(async (req, res) => {
   res.json(settings);
 }));
 
-// Serves the photo thumbnails shown while editing a customer's form: this
-// customer's uploads first, falling back to the template's own
+// Serves the photo thumbnails shown while editing an order's form: this
+// order's uploads first, falling back to the template's own
 // default/backdrop assets.
-app.get('/preview-assets/:customerId/:type/:filename', ah(async (req, res) => {
+app.get('/preview-assets/:orderId/:type/:filename', ah(async (req, res) => {
   const db = await withDb((d) => d);
-  const customer = db.customers.find((c) => c.id === req.params.customerId);
-  if (!customer) return res.status(404).end();
+  const order = db.orders.find((o) => o.id === req.params.orderId);
+  if (!order) return res.status(404).end();
   const { type, filename } = req.params;
   const contentType = MIME_TYPES[path.extname(filename).toLowerCase()] || 'application/octet-stream';
 
   if (type === 'images') {
     try {
-      const buf = await gh.getFileBuffer(`${UPLOADS_PREFIX}/${customer.id}/${filename}`);
+      const buf = await gh.getFileBuffer(`${UPLOADS_PREFIX}/${order.id}/${filename}`);
       res.set('Content-Type', contentType);
       return res.send(buf);
     } catch (err) {
       if (err.status !== 404) throw err;
     }
   }
-  const template = await getTemplate(customer.templateId);
+  const template = await getTemplate(order.templateId);
   if (!template) return res.status(404).end();
   try {
     const buf = await gh.getFileBuffer(`${template.dir}/assets/${type}/${filename}`);

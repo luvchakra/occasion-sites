@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Edit Customer — Occasion Sites</title>
+<title>Customer — Occasion Sites</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
@@ -28,21 +28,14 @@
   </aside>
   <main>
     <a class="link" href="/index.html">&larr; All customers</a>
-    <div class="row between" style="margin-top:8px;">
-      <h1 id="pageTitle">Loading…</h1>
-      <span class="badge" id="statusBadge"></span>
-    </div>
-    <div class="sub" id="pageSub"></div>
+    <h1 id="pageTitle" style="margin-top:8px;">Loading…</h1>
+    <div class="sub">Contact info and every order (website) for this customer.</div>
 
     <div class="card">
       <div class="grid-2">
         <div>
-          <label>Customer / couple name</label>
+          <label>Customer name</label>
           <input id="cName" type="text">
-        </div>
-        <div>
-          <label>Occasion date</label>
-          <input id="cDate" type="date">
         </div>
         <div>
           <label>Email</label>
@@ -58,179 +51,144 @@
       </div>
     </div>
 
-    <div id="formSections"></div>
-
-    <div class="row action-bar">
-      <button class="btn accent" id="saveBtn">Save changes</button>
-      <button class="btn" id="publishBtn">Publish live</button>
-      <a class="btn secondary" id="invoiceLink" href="#">Invoices</a>
+    <h2>New order</h2>
+    <div class="card">
+      <div class="grid-2">
+        <div>
+          <label>Order title</label>
+          <input id="newTitle" type="text" placeholder="e.g. Kabir & Ananya's Wedding Site">
+        </div>
+        <div>
+          <label>Occasion template</label>
+          <div class="row" style="gap:8px; margin-top:0;">
+            <select id="newTemplate" style="flex:1;"></select>
+            <a class="btn secondary small" id="previewTemplateLink" href="#" target="_blank" style="margin-top:0;">Preview</a>
+          </div>
+        </div>
+        <div>
+          <label>Occasion date</label>
+          <input id="newOccasionDate" type="date">
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn accent" id="createOrderBtn">Create order</button>
+      </div>
     </div>
-    <div class="sub" id="publishResult" style="margin-top:10px;"></div>
+
+    <h2>Orders</h2>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="responsive-table">
+          <thead>
+            <tr><th>Order #</th><th>Title</th><th>Occasion</th><th>Status</th><th>Updated</th><th>Preview</th><th></th></tr>
+          </thead>
+          <tbody id="orderRows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" hidden>No orders yet — create one above.</div>
+    </div>
   </main>
 </div>
 <script src="/app.js"></script>
 <script>
 const customerId = qs('id');
-let customer, template;
+let templates = [];
 
-function fieldControl(field, getValue, setValue) {
-  const value = getValue() ?? '';
-  if (field.type === 'textarea') {
-    const ta = el('textarea', { onchange: () => setValue(ta.value) });
-    ta.value = value;
-    return ta;
-  }
-  if (field.type === 'image') {
-    const thumb = el('img', {
-      class: 'thumb',
-      src: value ? `/preview-assets/${customerId}/${value}` : ''
-    });
-    thumb.style.visibility = value ? 'visible' : 'hidden';
-    const fileInput = el('input', {
-      type: 'file', accept: 'image/*',
-      onchange: async () => {
-        const file = fileInput.files[0];
-        if (!file) return;
-        try {
-          const path = await uploadPhoto(customerId, file);
-          setValue(path);
-          thumb.src = `/preview-assets/${customerId}/${path}`;
-          thumb.style.visibility = 'visible';
-          toast('Photo uploaded — remember to Save');
-        } catch (err) {
-          toast(err.message, true);
-        }
-      }
-    });
-    return el('div', { class: 'upload-row' }, [thumb, fileInput]);
-  }
-  const inputType = field.type === 'url' ? 'url' : 'text';
-  const input = el('input', { type: inputType, onchange: () => setValue(input.value) });
-  input.value = value;
-  return input;
+async function loadTemplates() {
+  templates = await api('GET', '/api/templates');
+  const sel = document.getElementById('newTemplate');
+  sel.innerHTML = templates.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
+    || '<option disabled>No templates found</option>';
+  updatePreviewLink();
+  sel.addEventListener('change', updatePreviewLink);
 }
 
-function renderListField(field) {
-  const wrap = el('div', {});
-  const items = getPath(customer.config, field.key) || [];
+function updatePreviewLink() {
+  const id = document.getElementById('newTemplate').value;
+  const link = document.getElementById('previewTemplateLink');
+  link.href = id ? `/preview-template/${id}` : '#';
+}
 
-  function renderItems() {
-    wrap.innerHTML = '';
-    items.forEach((item, idx) => {
-      const body = field.itemFields.map((sub) => el('div', {}, [
-        el('label', {}, sub.label),
-        fieldControl(sub, () => item[sub.key], (v) => { item[sub.key] = v; })
-      ]));
-      wrap.appendChild(el('div', { class: 'list-item' }, [
-        el('button', {
-          class: 'btn small danger remove', type: 'button',
-          onclick: () => { items.splice(idx, 1); renderItems(); }
-        }, 'Remove'),
-        ...body
-      ]));
+// Same picker used on the New Order form: a template select (scoped to
+// this order's occasion) + a Preview button — lets you check how any
+// matching template design looks without opening the order itself.
+function previewPicker(order) {
+  const options = templates.filter((t) => t.occasionType === order.occasionType);
+  const sel = el('select', { style: 'min-width:0;' },
+    (options.length ? options : templates).map((t) => {
+      const opt = el('option', { value: t.id }, t.label);
+      if (t.id === order.templateId) opt.selected = true;
+      return opt;
+    })
+  );
+  const btn = el('button', {
+    class: 'btn small secondary', type: 'button',
+    onclick: () => window.open(`/preview-template/${sel.value}`, '_blank')
+  }, 'Preview');
+  return el('div', { class: 'row', style: 'gap:6px; margin-top:0; flex-wrap:nowrap;' }, [sel, btn]);
+}
+
+async function loadOrders() {
+  const orders = await api('GET', `/api/orders?customerId=${customerId}`);
+  const rows = document.getElementById('orderRows');
+  const empty = document.getElementById('emptyState');
+  rows.innerHTML = '';
+  empty.hidden = orders.length > 0;
+  orders
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .forEach(o => {
+      const tr = el('tr', {}, [
+        el('td', { 'data-label': 'Order #' }, o.orderNumber),
+        el('td', { 'data-label': 'Title' }, el('a', { class: 'link', href: `/order.html?id=${o.id}` }, o.title)),
+        el('td', { 'data-label': 'Occasion' }, o.occasionType),
+        el('td', { 'data-label': 'Status' }, el('span', { class: `badge ${o.status}` }, o.status)),
+        el('td', { 'data-label': 'Updated' }, o.updatedAt ? new Date(o.updatedAt).toLocaleString() : ''),
+        el('td', { 'data-label': 'Preview' }, previewPicker(o)),
+        el('td', { class: 'actions' }, [
+          el('a', { class: 'btn small secondary', href: `/order.html?id=${o.id}` }, 'Open'),
+          ' ',
+          el('a', { class: 'btn small secondary', href: `/invoices.html?orderId=${o.id}` }, 'Invoices')
+        ])
+      ]);
+      rows.appendChild(tr);
     });
-    setPath(customer.config, field.key, items);
-  }
-  renderItems();
-
-  const addBtn = el('button', {
-    class: 'btn small secondary', type: 'button', style: 'margin-top:10px;',
-    onclick: () => {
-      const blank = {};
-      field.itemFields.forEach((sub) => { blank[sub.key] = ''; });
-      items.push(blank);
-      renderItems();
-    }
-  }, `+ Add ${field.itemLabel || 'item'}`);
-
-  return el('div', {}, [wrap, addBtn]);
 }
 
-function renderForm() {
-  const container = document.getElementById('formSections');
-  container.innerHTML = '';
-  template.schema.sections.forEach((section) => {
-    const fieldset = el('fieldset', {}, [el('legend', {}, section.title)]);
-    section.fields.forEach((field) => {
-      if (field.type === 'list') {
-        fieldset.appendChild(el('label', {}, field.label));
-        fieldset.appendChild(renderListField(field));
-      } else {
-        fieldset.appendChild(el('label', {}, field.label + (field.required ? ' *' : '')));
-        fieldset.appendChild(fieldControl(
-          field,
-          () => getPath(customer.config, field.key),
-          (v) => setPath(customer.config, field.key, v)
-        ));
-      }
-    });
-    container.appendChild(el('div', { class: 'card' }, fieldset));
-  });
-}
-
-async function saveConfig() {
-  await api('PUT', `/api/customers/${customerId}`, { config: customer.config });
-  toast('Saved');
-}
-
-async function load() {
-  customer = await api('GET', `/api/customers/${customerId}`);
-  const t = await api('GET', `/api/templates/${customer.templateId}`);
-  template = t;
-
+async function loadCustomer() {
+  const customer = await api('GET', `/api/customers/${customerId}`);
   document.getElementById('pageTitle').textContent = customer.name;
-  document.getElementById('pageSub').textContent = `${template.schema.label} · /sites/${customer.slug}/`;
-  const badge = document.getElementById('statusBadge');
-  badge.textContent = customer.status;
-  badge.className = `badge ${customer.status}`;
   document.getElementById('cName').value = customer.name;
-  document.getElementById('cDate').value = customer.occasionDate || '';
   document.getElementById('cEmail').value = customer.email || '';
   document.getElementById('cPhone').value = customer.phone || '';
-  document.getElementById('invoiceLink').href = `/invoices.html?customerId=${customerId}`;
-  if (customer.status === 'published' && customer.publicUrl) {
-    document.getElementById('publishResult').innerHTML =
-      `Live at <a class="link" href="${customer.publicUrl}" target="_blank">${customer.publicUrl}</a>`;
-  }
-
-  renderForm();
 }
 
 document.getElementById('saveContactBtn').addEventListener('click', async () => {
   try {
     await api('PUT', `/api/customers/${customerId}`, {
       name: document.getElementById('cName').value,
-      occasionDate: document.getElementById('cDate').value,
       email: document.getElementById('cEmail').value,
       phone: document.getElementById('cPhone').value
     });
     toast('Contact info saved');
-    load();
+    loadCustomer();
   } catch (err) { toast(err.message, true); }
 });
 
-document.getElementById('saveBtn').addEventListener('click', () => saveConfig().catch(err => toast(err.message, true)));
-
-document.getElementById('publishBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('publishBtn');
-  btn.disabled = true;
-  btn.textContent = 'Publishing…';
+document.getElementById('createOrderBtn').addEventListener('click', async () => {
+  const title = document.getElementById('newTitle').value.trim();
+  const templateId = document.getElementById('newTemplate').value;
+  const occasionDate = document.getElementById('newOccasionDate').value;
+  if (!title) return toast('Enter an order title first', true);
+  if (!templateId) return toast('No template selected', true);
   try {
-    await saveConfig();
-    const result = await api('POST', `/api/customers/${customerId}/publish`);
-    document.getElementById('publishResult').innerHTML = result.published
-      ? `Published! Live at <a class="link" href="${result.publicUrl}" target="_blank">${result.publicUrl}</a>`
-      : result.message;
-    load();
+    const order = await api('POST', '/api/orders', { customerId, title, templateId, occasionDate });
+    location.href = `/order.html?id=${order.id}`;
   } catch (err) {
     toast(err.message, true);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Publish live';
   }
 });
 
-load().catch(err => toast(err.message, true));
+Promise.all([loadCustomer(), loadTemplates()]).then(loadOrders).catch(err => toast(err.message, true));
 </script>
 </body>
 </html>

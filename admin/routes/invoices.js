@@ -12,8 +12,8 @@ function total(items) {
 
 router.get('/', ah(async (req, res) => {
   const db = await withDb((d) => d);
-  const list = req.query.customerId
-    ? db.invoices.filter((i) => i.customerId === req.query.customerId)
+  const list = req.query.orderId
+    ? db.invoices.filter((i) => i.orderId === req.query.orderId)
     : db.invoices;
   res.json(list.map((i) => ({ ...i, total: total(i.items) })));
 }));
@@ -22,21 +22,22 @@ router.get('/:id', ah(async (req, res) => {
   const db = await withDb((d) => d);
   const invoice = db.invoices.find((i) => i.id === req.params.id);
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-  const customer = db.customers.find((c) => c.id === invoice.customerId) || null;
-  res.json({ ...invoice, total: total(invoice.items), customer });
+  const order = db.orders.find((o) => o.id === invoice.orderId) || null;
+  const customer = order ? db.customers.find((c) => c.id === order.customerId) || null : null;
+  res.json({ ...invoice, total: total(invoice.items), order, customer });
 }));
 
 router.post('/', ah(async (req, res) => {
-  const { customerId, issueDate, dueDate, items, notes, status } = req.body;
-  if (!customerId) return res.status(400).json({ error: 'customerId is required' });
+  const { orderId, issueDate, dueDate, items, notes, status } = req.body;
+  if (!orderId) return res.status(400).json({ error: 'orderId is required' });
 
   const invoice = await withDb((db) => {
-    if (!db.customers.some((c) => c.id === customerId)) return null;
+    if (!db.orders.some((o) => o.id === orderId)) return null;
     db.counters.invoice += 1;
     const record = {
       id: newId('inv'),
       invoiceNumber: `INV-${String(db.counters.invoice).padStart(4, '0')}`,
-      customerId,
+      orderId,
       issueDate: issueDate || new Date().toISOString().slice(0, 10),
       dueDate: dueDate || '',
       items: Array.isArray(items) ? items : [],
@@ -49,7 +50,7 @@ router.post('/', ah(async (req, res) => {
     return record;
   });
 
-  if (!invoice) return res.status(400).json({ error: 'Unknown customerId' });
+  if (!invoice) return res.status(400).json({ error: 'Unknown orderId' });
   res.status(201).json({ ...invoice, total: total(invoice.items) });
 }));
 

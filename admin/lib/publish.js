@@ -4,18 +4,18 @@ const { renderSite } = require('./render');
 
 const UPLOADS_PREFIX = 'admin-data/uploads';
 
-// Publishes one customer's site as a single atomic commit: the rendered
-// HTML, the template's own default images/video (reused directly from
+// Publishes one order's site as a single atomic commit: the rendered HTML,
+// the template's own default images/video (reused directly from
 // templates/<id>/assets/ — same blob, no re-upload needed), and this
-// customer's uploaded photos (already sitting in the repo under
+// order's uploaded photos (already sitting in the repo under
 // admin-data/uploads/<id>/, re-committed under sites/<slug>/images/ the
 // same way).
-async function publishCustomer(customer) {
-  const template = await getTemplate(customer.templateId);
-  if (!template) throw new Error(`Unknown template: ${customer.templateId}`);
-  const html = renderSite(await getTemplateHtml(customer.templateId), template.schema, customer.config);
+async function publishOrder(order) {
+  const template = await getTemplate(order.templateId);
+  if (!template) throw new Error(`Unknown template: ${order.templateId}`);
+  const html = renderSite(await getTemplateHtml(order.templateId), template.schema, order.config);
 
-  const outDir = `sites/${customer.slug}`;
+  const outDir = `sites/${order.slug}`;
   const files = [{ path: `${outDir}/index.html`, content: Buffer.from(html) }];
 
   const tree = await gh.getTree();
@@ -27,14 +27,14 @@ async function publishCustomer(customer) {
     }
   }
 
-  const uploads = await gh.listDir(`${UPLOADS_PREFIX}/${customer.id}`);
+  const uploads = await gh.listDir(`${UPLOADS_PREFIX}/${order.id}`);
   for (const upload of uploads) {
     files.push({ path: `${outDir}/images/${upload.name}`, sha: upload.sha });
   }
 
-  await gh.commitFiles(files, `Publish site for ${customer.name} (${customer.slug})`);
+  await gh.commitFiles(files, `Publish site for ${order.title} (${order.slug})`);
 
   return { published: true, path: outDir };
 }
 
-module.exports = { publishCustomer };
+module.exports = { publishOrder };

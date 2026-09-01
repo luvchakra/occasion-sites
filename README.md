@@ -1,15 +1,18 @@
 # Occasion Sites
 
 An admin tool for a "we build your special-occasion website" business:
-manage reusable templates (wedding, birthday, anniversary, …), fill in each
-customer's details and photos through a simple form, publish their site as
-a live page, and send them a basic invoice.
+manage reusable templates (wedding, birthday, anniversary, …), and manage
+customers who can each place any number of **orders** — one order is one
+website (e.g. one customer might order a wedding site now and a birthday
+site for their kid later). Each order gets a system-generated order number
+and a title you choose, fill in through a simple form, publish as a live
+page, and invoice separately.
 
 ```
 templates/    reusable site templates (currently: wedding) — bundled read-only
-sites/        published customer websites, served via GitHub Pages
+sites/        published order websites, served via GitHub Pages
 admin/        the admin tool itself (Node/Express — runs locally or on Vercel)
-data/         customer records + invoices (committed — see Privacy below)
+data/         customers, orders, invoices (committed — see Privacy below)
 ```
 
 Deployable two ways:
@@ -57,27 +60,29 @@ settings. Every push to `main` redeploys it automatically.
 
 Open the dashboard. From there:
 
-1. **New customer** — pick a template (e.g. "Wedding"), enter their name → creates a draft.
-2. **Open** the customer → fill in the form (names, dates, venues, events, RSVP info…) and upload photos directly in each photo field.
-3. **Preview site** — opens the page as it'll look, without publishing anything.
+1. **New customer** — just a contact: name, email, phone. No occasion/template yet — that's chosen per order.
+2. **Open** the customer → **New order**: give it a title (e.g. "Kabir & Ananya's Wedding Site"), pick a template, optionally set the occasion date. You can **Preview** any template matching the occasion before committing. Creates the order with a system-generated order number (`ORD-0001`, …) and opens it.
+3. **On the order page** → fill in the form (names, dates, venues, events, RSVP info…) and upload photos directly in each photo field.
 4. **Publish live** — commits the rendered site into `sites/<slug>/` in this repo. It becomes live at `PUBLIC_BASE_URL/<slug>/` (GitHub Pages) within a minute or two.
-5. **Invoices** (from the customer page) — add line items, mark draft/sent/paid, and use **View / Print** to get a clean printable invoice (browser's Print → Save as PDF works for emailing it).
+5. **Invoices** (from the order page) — add line items, mark draft/sent/paid, and use **View / Print** to get a clean printable invoice (browser's Print → Save as PDF works for emailing it).
+
+A customer can have any number of orders — go back to their customer page any time to add another.
 
 **Business Settings** (top nav) sets the name/address/contact shown on invoice letterheads.
 
 ## Privacy
 
-`data/db.json` (customer names, emails, phone numbers, invoice amounts) and
-uploaded photos (`admin-data/uploads/`) are committed to this repo — **this
-repo is currently public** (required for free GitHub Pages on a personal
-account), which means that data is publicly readable right now, same as
-the code. Make the repo private as soon as you're comfortable — note that
-GitHub Pages on a *private* repo requires a paid GitHub plan (Pro/Team/
-Enterprise); on the free plan, going private takes every published
-customer site offline too.
+`data/db.json` (customer names, emails, phone numbers, order/invoice
+amounts) and uploaded photos (`admin-data/uploads/`) are committed to this
+repo — **this repo is currently public** (required for free GitHub Pages
+on a personal account), which means that data is publicly readable right
+now, same as the code. Make the repo private as soon as you're
+comfortable — note that GitHub Pages on a *private* repo requires a paid
+GitHub plan (Pro/Team/Enterprise); on the free plan, going private takes
+every published order's site offline too.
 
 ## Adding a new occasion type
 
 See [`TEMPLATE_AUTHORING.md`](./TEMPLATE_AUTHORING.md) — drop a new folder
 under `templates/`, and it shows up automatically as an option when
-creating a customer.
+creating an order.

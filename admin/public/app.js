@@ -13,10 +13,10 @@ async function api(method, url, body) {
   return data;
 }
 
-async function uploadPhoto(customerId, file) {
+async function uploadPhoto(orderId, file) {
   const form = new FormData();
   form.append('photo', file);
-  const res = await fetch(`/api/customers/${customerId}/photos`, { method: 'POST', body: form });
+  const res = await fetch(`/api/orders/${orderId}/photos`, { method: 'POST', body: form });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Upload failed');
   return data.path; // "images/xxx.jpg"
