@@ -10,6 +10,11 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<div class="mobile-topbar">
+  <button class="menu-toggle" aria-label="Open menu">☰</button>
+  <div class="brand"><span class="dot"></span> Occasion Sites</div>
+</div>
+<div class="sidebar-overlay"></div>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand"><span class="dot"></span> Occasion Sites</div>
@@ -52,7 +57,7 @@
     <h2>All invoices for this customer</h2>
     <div class="card">
       <div class="table-wrap">
-        <table>
+        <table class="responsive-table">
           <thead><tr><th>#</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
           <tbody id="invoiceRows"></tbody>
         </table>
@@ -124,18 +129,18 @@ async function loadInvoices() {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .forEach((inv) => {
       rows.appendChild(el('tr', {}, [
-        el('td', {}, inv.invoiceNumber),
-        el('td', {}, inv.issueDate || ''),
-        el('td', {}, inv.dueDate || ''),
-        el('td', {}, money(inv.total)),
-        el('td', {}, el('select', {
+        el('td', { 'data-label': '#' }, inv.invoiceNumber),
+        el('td', { 'data-label': 'Issued' }, inv.issueDate || ''),
+        el('td', { 'data-label': 'Due' }, inv.dueDate || ''),
+        el('td', { 'data-label': 'Total' }, money(inv.total)),
+        el('td', { 'data-label': 'Status' }, el('select', {
           onchange: (e) => api('PUT', `/api/invoices/${inv.id}`, { status: e.target.value })
         }, ['draft', 'sent', 'paid'].map(s => {
           const opt = el('option', { value: s }, s);
           if (s === inv.status) opt.selected = true;
           return opt;
         }))),
-        el('td', {}, [
+        el('td', { class: 'actions' }, [
           el('a', { class: 'btn small secondary', href: `/invoice-print.html?id=${inv.id}`, target: '_blank' }, 'View / Print'),
           ' ',
           el('button', { class: 'btn small danger', onclick: async () => {

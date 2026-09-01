@@ -10,6 +10,11 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<div class="mobile-topbar">
+  <button class="menu-toggle" aria-label="Open menu">☰</button>
+  <div class="brand"><span class="dot"></span> Occasion Sites</div>
+</div>
+<div class="sidebar-overlay"></div>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand"><span class="dot"></span> Occasion Sites</div>
@@ -55,7 +60,7 @@
 
     <div id="formSections"></div>
 
-    <div class="row" style="margin-top:20px; position:sticky; bottom:16px;">
+    <div class="row action-bar">
       <button class="btn accent" id="saveBtn">Save changes</button>
       <button class="btn secondary" id="previewBtn">Preview site</button>
       <button class="btn" id="publishBtn">Publish live</button>

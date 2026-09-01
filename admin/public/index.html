@@ -10,6 +10,11 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<div class="mobile-topbar">
+  <button class="menu-toggle" aria-label="Open menu">☰</button>
+  <div class="brand"><span class="dot"></span> Occasion Sites</div>
+</div>
+<div class="sidebar-overlay"></div>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand"><span class="dot"></span> Occasion Sites</div>
@@ -58,7 +63,7 @@
     <h2>All customers</h2>
     <div class="card" id="listCard">
       <div class="table-wrap">
-        <table id="customerTable">
+        <table id="customerTable" class="responsive-table">
           <thead>
             <tr><th>Name</th><th>Occasion</th><th>Status</th><th>Updated</th><th></th></tr>
           </thead>
@@ -99,11 +104,11 @@ async function loadCustomers() {
     .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
     .forEach(c => {
       const tr = el('tr', {}, [
-        el('td', {}, el('a', { class: 'link', href: `/customer.html?id=${c.id}` }, c.name)),
-        el('td', {}, c.occasionType),
-        el('td', {}, el('span', { class: `badge ${c.status}` }, c.status)),
-        el('td', {}, c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''),
-        el('td', {}, [
+        el('td', { 'data-label': 'Name' }, el('a', { class: 'link', href: `/customer.html?id=${c.id}` }, c.name)),
+        el('td', { 'data-label': 'Occasion' }, c.occasionType),
+        el('td', { 'data-label': 'Status' }, el('span', { class: `badge ${c.status}` }, c.status)),
+        el('td', { 'data-label': 'Updated' }, c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''),
+        el('td', { class: 'actions' }, [
           el('a', { class: 'btn small secondary', href: `/customer.html?id=${c.id}` }, 'Open'),
           ' ',
           el('a', { class: 'btn small secondary', href: `/invoices.html?customerId=${c.id}` }, 'Invoices')

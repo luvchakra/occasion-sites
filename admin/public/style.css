@@ -156,13 +156,14 @@ input:focus, textarea:focus, select:focus {
 textarea { min-height: 84px; resize: vertical; }
 .field-hint { font-size: 0.78rem; color: var(--ink-faint); margin-top: 4px; }
 
-fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin-top: 16px; }
+fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin-top: 16px; min-width: 0; }
 legend { padding: 0 8px; font-size: 0.84rem; font-weight: 650; color: var(--ink); }
 
 .list-item { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; margin-top: 10px; position: relative; background: #fcfcfd; }
 .list-item .remove { position: absolute; top: 10px; right: 10px; }
 .thumb { width: 76px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #eee; }
-.upload-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.upload-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; flex-wrap: wrap; min-width: 0; }
+.upload-row input[type=file] { min-width: 0; max-width: 100%; flex: 1; }
 
 .toast {
   position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -184,24 +185,90 @@ a.link:hover { text-decoration: underline; }
 .template-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; background: #fff; box-shadow: var(--shadow-sm); }
 .template-card h3 { margin: 0 0 4px; font-size: 1rem; }
 .template-card p { margin: 0 0 12px; color: var(--ink-soft); font-size: 0.85rem; min-height: 2.4em; }
+.action-bar { margin-top: 20px; position: sticky; bottom: 16px; }
+
+/* ---- Mobile top bar + off-canvas sidebar drawer ---- */
+.mobile-topbar {
+  display: none;
+  align-items: center; gap: 12px;
+  background: var(--sidebar); color: #fff;
+  padding: 13px 14px;
+  position: sticky; top: 0; z-index: 40;
+}
+.mobile-topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; }
+.mobile-topbar .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.menu-toggle {
+  background: none; border: none; color: #fff; font-size: 1.3rem; line-height: 1;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); cursor: pointer; flex-shrink: 0; padding: 0;
+}
+.menu-toggle:hover, .menu-toggle:active { background: rgba(255, 255, 255, 0.12); }
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; background: rgba(15, 15, 20, 0.5);
+  z-index: 45;
+}
+.sidebar-overlay.open { display: block; }
 
 @media (max-width: 860px) {
   .grid-2 { grid-template-columns: 1fr; }
+  .mobile-topbar { display: flex; }
+
   .sidebar {
-    position: static; width: auto; flex-shrink: 1;
-    flex-direction: row; align-items: center;
-    padding: 12px 14px; overflow-x: auto;
+    position: fixed; top: 0; bottom: 0; left: 0;
+    width: 250px; max-width: 82vw;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    z-index: 50;
   }
-  .sidebar .brand { padding: 0 12px 0 0; white-space: nowrap; }
-  .sidebar nav { flex-direction: row; }
-  .sidebar nav a { white-space: nowrap; }
-  .sidebar .spacer, .sidebar .sidebar-foot { display: none; }
+  .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-md); }
+
+  /* Flex items default to min-width:auto, which lets wide unwrapped
+     content (long dates, button rows) push them past the container
+     instead of shrinking/wrapping — the classic flexbox overflow trap.
+     Force them to actually respect the viewport. */
+  .app-shell, .app-shell main { min-width: 0; }
   .app-shell { flex-direction: column; }
-  .app-shell main { margin-left: 0; max-width: 100%; padding: 22px 16px 60px; }
+  .app-shell main { margin-left: 0; max-width: 100%; padding: 20px 14px 60px; }
 
   h1 { font-size: 1.32rem; }
-  .card { padding: 16px; }
-  th, td { padding: 9px 6px; font-size: 0.85rem; }
+  .card { padding: 15px; }
+
+  /* Tables marked .responsive-table become stacked cards instead of
+     scrolling sideways — each <td> needs a data-label attribute. The
+     wrapper's horizontal scroll is only for desktop-width tables; on
+     mobile everything must actually fit, not scroll off invisibly. */
+  .table-wrap { overflow-x: visible; }
+  .table-wrap table.responsive-table { min-width: 0; }
+  .responsive-table thead { display: none; }
+  .responsive-table, .responsive-table tbody, .responsive-table tr, .responsive-table td { display: block; width: 100%; min-width: 0; }
+  .responsive-table tr {
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 4px 12px; margin-bottom: 10px;
+  }
+  .responsive-table tr:last-child { margin-bottom: 0; }
+  .responsive-table td {
+    border: none; padding: 8px 0; min-width: 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .responsive-table td > * { min-width: 0; overflow-wrap: break-word; }
+  .responsive-table td:not(:last-child) { border-bottom: 1px solid var(--line); }
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-size: 0.72rem; font-weight: 650; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+  }
+  .responsive-table td.actions { justify-content: flex-end; flex-wrap: wrap; }
+  .responsive-table td.actions::before { content: none; }
+
+  /* A sticky floating bar makes sense with room to spare on desktop; on a
+     small screen it just overlaps form content while scrolling. Let it
+     sit in normal flow instead, as a clean 2-up button grid. */
+  .action-bar {
+    position: static;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .action-bar .btn, .action-bar a.btn { width: 100%; justify-content: center; }
 }
 
 @media print {

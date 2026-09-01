@@ -60,6 +60,21 @@ function qs(name) {
   return new URLSearchParams(location.search).get(name);
 }
 
+// Wires up the mobile hamburger button + off-canvas sidebar, if this page
+// has one (elements are optional — a no-op on pages without them, like the
+// print-friendly invoice view).
+(function initMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const toggle = document.querySelector('.menu-toggle');
+  const overlay = document.querySelector('.sidebar-overlay');
+  if (!sidebar || !toggle || !overlay) return;
+  const open = () => { sidebar.classList.add('open'); overlay.classList.add('open'); };
+  const close = () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); };
+  toggle.addEventListener('click', open);
+  overlay.addEventListener('click', close);
+  sidebar.querySelectorAll('nav a').forEach((a) => a.addEventListener('click', close));
+})();
+
 function toast(msg, isError) {
   const t = document.getElementById('toast') || document.body.appendChild(el('div', { id: 'toast', class: 'toast' }));
   t.textContent = msg;
