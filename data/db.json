@@ -148,10 +148,33 @@
       "status": "draft",
       "createdAt": "2026-09-01T12:24:24.820Z",
       "updatedAt": "2026-09-01T12:24:24.820Z"
+    },
+    {
+      "id": "inv_f4e82cb8f121",
+      "invoiceNumber": "INV-0002",
+      "customerId": "cust_5c30c1f80b8e",
+      "issueDate": "2026-09-17",
+      "dueDate": "2026-09-28",
+      "items": [
+        {
+          "description": "Website design",
+          "qty": 1,
+          "unitPrice": 10000
+        },
+        {
+          "description": "Software",
+          "qty": 1,
+          "unitPrice": 1000
+        }
+      ],
+      "notes": "",
+      "status": "draft",
+      "createdAt": "2026-09-01T13:54:51.245Z",
+      "updatedAt": "2026-09-01T13:54:51.245Z"
     }
   ],
   "counters": {
-    "invoice": 1
+    "invoice": 2
   },
   "settings": {
     "businessName": "Luv Chakra Occasion Sites",
