@@ -195,8 +195,10 @@
     "invoice": 3
   },
   "settings": {
-    "businessName": "Luv Chakra Occasion Sites",
+    "businessName": "Occasion Sites",
     "email": "luvchakra@gmail.com",
-    "paymentDetails": "UPI / bank details go here"
+    "paymentDetails": "UPI / bank details go here",
+    "address": "",
+    "phone": ""
   }
 }
